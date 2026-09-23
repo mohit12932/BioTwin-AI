@@ -29,7 +29,7 @@ import {
   Brain,
   RefreshCw,
   MessageSquare,
-  ArrowLeft, Bell, X, ArrowRight
+  ArrowLeft, Bell, X, ArrowRight, Dna, Pill
 } from 'lucide-react';
 import apiClient, { startNegotiation, startNegotiationSync, getNegotiationState, getTelemetryWebSocketUrl, injectIntervention } from '../api/apiClient';
 import PatientProfilePanel from '../components/PatientProfilePanel';
