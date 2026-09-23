@@ -324,7 +324,15 @@ Ensure your response is valid JSON format.`;
       const model = genAI.getGenerativeModel({ model: MODEL });
       const result = await model.generateContent(prompt);
       let text = result.response.text();
-      text = text.replace(/```json/g, '').replace(/```/g, '').trim();
+      
+      const startIndex = text.indexOf('{');
+      const endIndex = text.lastIndexOf('}');
+      if (startIndex !== -1 && endIndex !== -1) {
+        text = text.substring(startIndex, endIndex + 1);
+      } else {
+        text = text.replace(/```json/gi, '').replace(/```/g, '').trim();
+      }
+      
       return JSON.parse(text);
     } else {
       const response = await openai.chat.completions.create({
@@ -386,7 +394,15 @@ Do not include markdown blocks, just raw JSON.`;
       const model = genAI.getGenerativeModel({ model: MODEL });
       const result = await model.generateContent(prompt);
       let text = result.response.text();
-      text = text.replace(/```json/g, '').replace(/```/g, '').trim();
+      
+      const startIndex = text.indexOf('{');
+      const endIndex = text.lastIndexOf('}');
+      if (startIndex !== -1 && endIndex !== -1) {
+        text = text.substring(startIndex, endIndex + 1);
+      } else {
+        text = text.replace(/```json/gi, '').replace(/```/g, '').trim();
+      }
+      
       return JSON.parse(text);
     } else {
       const response = await openai.chat.completions.create({
@@ -460,7 +476,17 @@ Do not include markdown blocks, just raw JSON.`;
   return executeWithRetry(async () => {
     const result = await model.generateContent([prompt, ...imageParts]);
     let text = result.response.text();
-    text = text.replace(/```json/g, '').replace(/```/g, '').trim();
+    
+    // Robust JSON extraction
+    const startIndex = text.indexOf('{');
+    const endIndex = text.lastIndexOf('}');
+    if (startIndex !== -1 && endIndex !== -1) {
+      text = text.substring(startIndex, endIndex + 1);
+    } else {
+      // fallback to regex if no brackets found (unlikely for JSON, but safe)
+      text = text.replace(/```json/gi, '').replace(/```/g, '').trim();
+    }
+    
     return JSON.parse(text);
   });
 }
