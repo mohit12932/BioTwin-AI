@@ -136,7 +136,8 @@ export const getNegotiationTelemetry = async (sessionId) => {
  */
 export const getTelemetryWebSocketUrl = () => {
   const wsProtocol = apiBaseUrl.startsWith('https') ? 'wss' : 'ws';
-  const host = apiBaseUrl.replace(/^https?:\/\//, '').replace(/\/api$/, '');
+  // Robust replacement of /api or /api/ at the end of the URL
+  const host = apiBaseUrl.replace(/^https?:\/\//, '').replace(/\/api\/?$/, '');
   return `${wsProtocol}://${host}`;
 };
 
