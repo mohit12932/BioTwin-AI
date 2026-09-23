@@ -976,13 +976,13 @@ const Dashboard = ({ role = 'doctor', providedId, providedSection }) => {
           
           <div className="flex items-center gap-4 w-[35%]">
             <div className="w-10 h-10 rounded-full bg-slate-900 text-white flex items-center justify-center font-bold text-lg shadow-sm">
-              {patient?.personalInfo?.name?.charAt(0) || 'D'}
+              {patient?.name?.charAt(0) || 'D'}
             </div>
             <div>
               <div className="flex items-center gap-2">
-                <h2 className="text-[16px] font-bold text-slate-800 leading-none">{patient?.personalInfo?.name || 'Dorothy Baker'}</h2>
+                <h2 className="text-[16px] font-bold text-slate-800 leading-none">{patient?.name || 'Dorothy Baker'}</h2>
                 <span className="text-[11px] font-bold text-slate-500 bg-slate-100 px-2 py-0.5 rounded-sm">
-                  {patient?.personalInfo?.age || 52}{patient?.personalInfo?.gender?.charAt(0) || 'F'}
+                  {patient?.age || patient?.profile?.age || 52}{patient?.gender?.charAt(0) || patient?.profile?.gender?.charAt(0) || 'F'}
                 </span>
               </div>
               <div className="flex items-center gap-2 mt-1">
