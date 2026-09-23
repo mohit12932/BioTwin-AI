@@ -97,6 +97,11 @@ router.post('/', authorize('doctor', 'admin'), async (req, res) => {
     return res.status(503).json({ error: 'MongoDB is required but not connected.' });
   }
 
+  try {
+    await Patient.create(newPatient);
+    console.log(`Patient saved to MongoDB: ${newPatient.patientId}`);
+  } catch(e) {
+    console.warn('MongoDB save failed for patient:', e.message);
     return res.status(500).json({ error: 'Database error' });
   }
   
