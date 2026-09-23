@@ -2,39 +2,56 @@ const generateId = () => require('crypto').randomBytes(16).toString('hex');
 
 const parseLabPanel = (rawText = '') => {
   const text = String(rawText || '').toLowerCase();
-  const extract = (regex, fallback) => {
+  const extract = (regex) => {
     const match = text.match(regex);
-    return match ? match[1] : fallback;
+    return match ? match[1] : null;
   };
 
-  const glucose = Number(extract(/glucose\s*[:=]?\s*(\d{2,3})/, 100));
-  const systolic = Number(extract(/bp\s*[:=]?\s*(\d{2,3})\/?(\d{2,3})?/, 120));
-  const diastolic = Number((text.match(/bp\s*[:=]?\s*(\d{2,3})\/?(\d{2,3})?/) || [])[2] || 80);
-  const spo2 = Number(extract(/spo2\s*[:=]?\s*(\d{2,3})/, 98));
-  const variant = extract(/variant\s*[:=]?\s*([a-z0-9\-\s]+?)(?=\s+(target|resistance|immune|glucose|bp|spo2)\b|$)/, 'Not Assessed').trim();
-  const target = extract(/target\s*[:=]?\s*([a-z0-9\-\s]+?)(?=\s+(variant|resistance|immune|glucose|bp|spo2)\b|$)/, 'Broad Standard of Care').trim();
-  const resistance = extract(/resistance\s*[:=]?\s*([a-z0-9\-\s]+?)(?=\s+(variant|target|immune|glucose|bp|spo2)\b|$)/, 'None reported').trim();
-  const immune = extract(/immune\s*[:=]?\s*([a-z0-9\-\s]+?)(?=\s+(variant|target|resistance|glucose|bp|spo2)\b|$)/, 'Baseline').trim();
+  const glucoseStr = extract(/glucose\s*[:=]?\s*(\d{2,3})/);
+  const systolicStr = extract(/bp\s*[:=]?\s*(\d{2,3})\/?(\d{2,3})?/);
+  const diastolicStr = (text.match(/bp\s*[:=]?\s*(\d{2,3})\/?(\d{2,3})?/) || [])[2];
+  const spo2Str = extract(/spo2\s*[:=]?\s*(\d{2,3})/);
+  
+  const variant = extract(/variant\s*[:=]?\s*([a-z0-9\-\s]+?)(?=\s+(target|resistance|immune|glucose|bp|spo2)\b|$)/);
+  const target = extract(/target\s*[:=]?\s*([a-z0-9\-\s]+?)(?=\s+(variant|resistance|immune|glucose|bp|spo2)\b|$)/);
+  const resistance = extract(/resistance\s*[:=]?\s*([a-z0-9\-\s]+?)(?=\s+(variant|target|immune|glucose|bp|spo2)\b|$)/);
+  const immune = extract(/immune\s*[:=]?\s*([a-z0-9\-\s]+?)(?=\s+(variant|target|resistance|glucose|bp|spo2)\b|$)/);
 
   return {
     parsedVitals: {
-      sugar: glucose,
-      bpSystolic: systolic,
-      bpDiastolic: diastolic,
-      spO2: spo2,
+      sugar: glucoseStr ? Number(glucoseStr) : null,
+      bpSystolic: systolicStr ? Number(systolicStr) : null,
+      bpDiastolic: diastolicStr ? Number(diastolicStr) : null,
+      spO2: spo2Str ? Number(spo2Str) : null,
     },
     parsedBiomarkers: {
-      genomicVariant: variant || 'Not Assessed',
-      therapyTarget: target || 'Broad Standard of Care',
-      expressionLevel: glucose > 130 ? 'Elevated metabolic stress' : 'Moderate',
-      resistanceMarker: resistance || 'None reported',
-      immuneProfile: immune || 'Baseline',
+      genomicVariant: variant ? variant.trim() : null,
+      therapyTarget: target ? target.trim() : null,
+      expressionLevel: glucoseStr && Number(glucoseStr) > 130 ? 'Elevated metabolic stress' : null,
+      resistanceMarker: resistance ? resistance.trim() : null,
+      immuneProfile: immune ? immune.trim() : null,
     },
-    summary: 'Mock lab parser extracted structured vitals and biomarker hints from raw lab panel text.',
+    summary: 'Lab parser extracted structured vitals and biomarker hints from raw lab panel text.',
   };
 };
 
 const getDemoCases = () => ([
+  {
+    slug: 'crm-crisis',
+    title: 'Cardio-Renal-Metabolic Crisis',
+    disease: 'CRM Syndrome',
+    payload: {
+      name: 'Ramesh Patel', age: 68, gender: 'Male', height: 168, weight: 82, bloodGroup: 'B+',
+      symptoms: ['Severe swelling in legs (edema)', 'Shortness of breath at rest'], symptomSeverity: 9, symptomDuration: 7,
+      medicalHistory: { conditions: ['Heart Failure (HFrEF 30%)', 'Stage 4 CKD (eGFR 22)', 'Type 2 Diabetes'], surgeries: 'CABG (2018)', familyHistory: 'Strong diabetic and cardiac history.' },
+      medications: [{ name: 'Furosemide', dosage: '80mg', frequency: 'Twice daily' }, { name: 'Metformin', dosage: '1000mg', frequency: 'Twice daily' }],
+      biomarkers: { genomicVariant: 'Not Assessed', therapyTarget: 'CRM Axis', expressionLevel: 'High', resistanceMarker: 'None', immuneProfile: 'Baseline' },
+      lifestyle: { smoking: 'Past', alcohol: 'No', exercise: 'None', diet: 'High Sodium' },
+      vitals: { heartRate: 95, bpSystolic: 155, bpDiastolic: 95, sugar: 210, spO2: 91, temperature: 98.6 },
+      disease: 'Cardio-Renal-Metabolic', treatmentGoal: 'Prevent hospitalization and preserve kidney function',
+      socioEconomic: { insuranceTier: 'None (Out of Pocket)', monthlyMedicationBudget: 5000, location: 'Tier 3 City (India)', transportationAccess: 'Poor', workScheduleFlexibility: 'None' }
+    }
+  },
   {
     slug: 'cardio-intervention',
     title: 'Cardiovascular Intervention',

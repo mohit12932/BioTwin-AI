@@ -32,11 +32,10 @@ import HITLInterventionPanel from '../components/HITLInterventionPanel';
 // Agent node visualization for the network diagram
 function AgentNode({ agent, isActive, hasProposal, status }) {
   const AGENT_CONFIG = {
-    geneticist: { color: 'purple', icon: '🧬', label: 'Geneticist' },
+    nephrologist: { color: 'purple', icon: '🫘', label: 'Nephrologist' },
     oncologist: { color: 'red', icon: '🎗️', label: 'Oncologist' },
     cardiologist: { color: 'pink', icon: '❤️', label: 'Cardiologist' },
     endocrinologist: { color: 'amber', icon: '⚗️', label: 'Endocrinologist' },
-    pharmacologist: { color: 'green', icon: '💊', label: 'Pharmacologist' },
     hera: { color: 'cyan', icon: '🛡️', label: 'HERA' },
     patient_advocate: { color: 'blue', icon: '👤', label: 'Patient Advocate' },
   };
@@ -87,7 +86,7 @@ function AgentNode({ agent, isActive, hasProposal, status }) {
 
 // Network visualization showing agent relationships
 function AgentNetwork({ activeAgent, proposals, status }) {
-  const agents = ['geneticist', 'oncologist', 'cardiologist', 'endocrinologist', 'pharmacologist', 'hera', 'patient_advocate'];
+  const agents = ['nephrologist', 'oncologist', 'cardiologist', 'endocrinologist', 'hera', 'patient_advocate'];
   
   return (
     <div className="rounded-2xl border border-slate-700/60 bg-slate-900/90 p-4">

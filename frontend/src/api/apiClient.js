@@ -139,4 +139,32 @@ export const getTelemetryWebSocketUrl = () => {
   return `${wsProtocol}://${host}`;
 };
 
+/**
+ * Upload one or multiple medical documents (images/PDF) for AI parsing
+ * @param {File[]} files - Array of document files to upload
+ * @returns {Promise<Object>} - Parsed JSON data
+ */
+export const parseLabReport = async (files) => {
+  const formData = new FormData();
+  
+  if (Array.isArray(files)) {
+    files.forEach(file => {
+      formData.append('documents', file);
+    });
+  } else {
+    // Fallback for single file
+    formData.append('documents', files);
+  }
+
+  const response = await apiClient.post('/intake/parse-document', formData, {
+    headers: {
+      'Content-Type': 'multipart/form-data',
+    },
+    // Don't timeout on OCR as it takes longer
+    timeout: 30000 
+  });
+  
+  return response.data;
+};
+
 export default apiClient;

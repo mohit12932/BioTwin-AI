@@ -8,12 +8,9 @@ const { isMongoReady } = require('../config/mongo');
 const JWT_SECRET = process.env.JWT_SECRET || 'fallback_secret_for_demo_purposes_only';
 const JWT_EXPIRES_IN = '24h';
 
-// ── Demo/mock account ────────────────────────────────────────────────────────
-// These credentials always work regardless of MongoDB status.
-// This ensures Vercel (or any deployment without a seeded DB) can still demo.
+// ── Demo account details for seeding ──────────────────────────────────────────
 const DEMO_EMAIL    = 'doctor@biotwin.ai';
 const DEMO_PASSWORD = 'password123';
-const DEMO_USER     = { id: 'demo-doc-001', role: 'doctor', name: 'Dr. Gregory House', email: DEMO_EMAIL };
 
 const signToken = (payload) =>
   new Promise((resolve, reject) =>
@@ -31,15 +28,9 @@ router.post('/login', async (req, res) => {
       return res.status(400).json({ error: 'Email and password are required' });
     }
 
-    // 1. Demo credentials — always accepted, no DB needed
-    if (email === DEMO_EMAIL && password === DEMO_PASSWORD) {
-      const token = await signToken({ user: DEMO_USER });
-      return res.json({ token, user: DEMO_USER });
-    }
-
-    // 2. Real DB lookup (only if MongoDB is available)
+    // Real DB lookup
     if (!isMongoReady()) {
-      return res.status(401).json({ error: 'Invalid credentials' });
+      return res.status(503).json({ error: 'MongoDB is required for authentication' });
     }
 
     const user = await User.findOne({ email });
@@ -60,17 +51,12 @@ router.post('/login', async (req, res) => {
   }
 });
 
-// ── POST /api/auth/seed ──────────────────────────────────────────────────────
-// Always returns success. If MongoDB is available, creates/upserts the real
-// doctor document. If not (cold start, no Atlas, etc.), mock credentials work anyway.
+// Creates/upserts the real doctor document in MongoDB.
 router.post('/seed', async (req, res) => {
   try {
-    // If MongoDB is not available, demo credentials still work via /login
     if (!isMongoReady()) {
-      return res.status(201).json({
-        message: 'Demo credentials are ready (mock mode).',
-        email: DEMO_EMAIL,
-        password: DEMO_PASSWORD
+      return res.status(503).json({
+        error: 'MongoDB is required to seed the database.',
       });
     }
 
@@ -99,13 +85,8 @@ router.post('/seed', async (req, res) => {
     });
 
   } catch (err) {
-    // Even if DB seed fails, tell the client demo credentials will work
-    console.error('Seed error (non-fatal):', err.message);
-    return res.status(201).json({
-      message: 'Demo credentials are available regardless of DB state.',
-      email: DEMO_EMAIL,
-      password: DEMO_PASSWORD
-    });
+    console.error('Seed error:', err.message);
+    return res.status(500).json({ error: 'Failed to seed database' });
   }
 });
 

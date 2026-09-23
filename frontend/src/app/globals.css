@@ -24,8 +24,8 @@
   --color-surface-600: #57534e;
   
   /* Agent specialty colors */
-  --color-pharmacologist: #8b5cf6;
-  --color-geneticist: #06b6d4;
+  --color-cardiologist: #8b5cf6;
+  --color-nephrologist: #06b6d4;
   --color-endocrinologist: #f59e0b;
   --color-lead-physician: #10b981;
   --color-consensus: #059669;
@@ -73,12 +73,12 @@ body {
   transform: translateY(-2px);
 }
 
-.agent-card-pharmacologist {
-  border-left: 4px solid var(--color-pharmacologist);
+.agent-card-cardiologist {
+  border-left: 4px solid var(--color-cardiologist);
 }
 
-.agent-card-geneticist {
-  border-left: 4px solid var(--color-geneticist);
+.agent-card-nephrologist {
+  border-left: 4px solid var(--color-nephrologist);
 }
 
 .agent-card-endocrinologist {

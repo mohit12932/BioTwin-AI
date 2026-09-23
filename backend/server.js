@@ -134,17 +134,12 @@ app.use((req, res, next) => {
 const authRoutes = require('./routes/auth.routes');
 const authMiddleware = require('./middleware/auth.middleware');
 const patientRoutes = require('./routes/patient.routes');
-const simulationRoutes = require('./routes/simulation.routes');
-const feedbackRoutes = require('./routes/feedback.routes');
-const externalRoutes = require('./routes/external.routes');
-const explainRoutes = require('./routes/explain.routes');
-const pharmacologyRoutes = require('./routes/pharmacology.routes');
-const alertsRoutes = require('./routes/alerts.routes');
-const trialsRoutes = require('./routes/trials.routes');
 const negotiationRoutes = require('./routes/negotiation.routes');
+const intakeRoutes = require('./routes/intake.routes');
 
 // Public routes
 app.use('/api/auth', authRoutes);
+app.use('/api/intake', intakeRoutes);
 
 // Health check endpoint (public - no auth required)
 app.get('/api/health', (req, res) => {
@@ -155,7 +150,7 @@ app.get('/api/health', (req, res) => {
     service: "BioTwin AI API",
     timestamp: new Date().toISOString(),
     environment: process.env.NODE_ENV || 'development',
-    database: isMongoReady() ? 'MongoDB Atlas' : 'In-Memory MockDB',
+    database: isMongoReady() ? 'MongoDB Atlas' : 'Disconnected',
     features: {
       agentNegotiation: true,
       websocketTelemetry: true,
@@ -172,13 +167,6 @@ app.get('/api/health', (req, res) => {
 app.use('/api', authMiddleware);
 
 app.use('/api/patient', patientRoutes);
-app.use('/api', simulationRoutes); // /api/simulate and /api/predict
-app.use('/api/learning', feedbackRoutes); // Layer 4 API
-app.use('/api/external', externalRoutes); // Layer 5 API
-app.use('/api/explain', explainRoutes); // Layer 6 Advanced Intelligence & XAI
-app.use('/api/pharmacology', pharmacologyRoutes); // Drug interactions & PK/PD modeling
-app.use('/api/alerts', alertsRoutes); // Clinical alerts & deterioration monitoring
-app.use('/api/trials', trialsRoutes); // Clinical trial matching
 app.use('/api/negotiate', negotiationRoutes); // Multi-round agent negotiation protocol
 
 // ==========================================
@@ -258,7 +246,7 @@ const startServer = async () => {
     logger.info(`BioTwin API Server started`, { 
       port: PORT, 
       env: process.env.NODE_ENV || 'development',
-      database: dbConnected ? 'MongoDB' : 'In-Memory MockDB',
+      database: dbConnected ? 'MongoDB' : 'Disconnected',
       features: ['Agent Negotiation', 'WebSocket Telemetry', 'HITL Interventions']
     });
   });

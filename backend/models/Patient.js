@@ -14,7 +14,6 @@ const GenomicVariantSchema = new mongoose.Schema({
   },
   significance: { 
     type: String, 
-    enum: ['Pathogenic', 'Likely Pathogenic', 'VUS', 'Likely Benign', 'Benign', 'Unknown'],
     default: 'Unknown'
   },
   actionability: {

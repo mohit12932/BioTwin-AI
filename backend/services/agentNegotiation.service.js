@@ -1,65 +1,39 @@
 /**
  * Multi-Round Agent Negotiation Protocol Service
  * 
- * AI-Powered Implementation using OpenAI GPT-4
- * 
- * Enhanced with:
- * - Feature 1: HITL Steering (Human-in-the-Loop)
- * - Feature 2: Dynamic Agent Swarming
- * - Feature 3: Live Tool Use
- * - Feature 5: Agent Memory & Self-Reflection
+ * AI-Powered Implementation using OpenAI GPT-4 / OpenRouter
  * 
  * Implements a cyclic negotiation loop (Actor Model pattern) where:
  * 1. Specialist Agents (Geneticist, Pharmacologist, Endocrinologist) analyze patient data
  * 2. HERA Guardian evaluates economic/access constraints and may VETO
  * 3. Consensus Engine synthesizes a final recommendation
+ * 
+ * Note: Features such as simulated memory, swarming, and fake tool usage 
+ * have been removed to ensure the system only presents real, verified results.
  */
 
 const EventEmitter = require('events');
+const crypto = require('crypto');
+const { getCachedConsensus, setCachedConsensus } = require('../utils/cache');
+const heraGraph = require('./heraConstraint.service');
 require('dotenv').config();
 
-// Import new services for advanced features
-let agentMemory = null;
-let agentSwarming = null;
-let agentTools = null;
-
-try {
-  agentMemory = require('./agentMemory.service');
-  console.log('✅ Agent Memory service loaded');
-} catch (e) {
-  console.log('⚠️ Agent Memory service not available');
-}
-
-try {
-  agentSwarming = require('./agentSwarming.service');
-  console.log('✅ Agent Swarming service loaded');
-} catch (e) {
-  console.log('⚠️ Agent Swarming service not available');
-}
-
-try {
-  agentTools = require('./agentTools.service');
-  console.log('✅ Agent Tools service loaded');
-} catch (e) {
-  console.log('⚠️ Agent Tools service not available');
-}
-
-// Check for OpenAI/OpenRouter integration
+// Check for Gemini/OpenAI/OpenRouter integration
 let openaiClient = null;
 let AI_ENABLED = false;
 
 try {
-  if (process.env.OPENROUTER_API_KEY || process.env.OPENAI_API_KEY) {
+  if (process.env.GEMINI_API_KEY || process.env.OPENROUTER_API_KEY || process.env.OPENAI_API_KEY) {
     openaiClient = require('./ai/openaiClient');
     AI_ENABLED = true;
-    const provider = process.env.OPENROUTER_API_KEY ? 'OpenRouter' : 'OpenAI';
-    console.log(`✅ AI integration enabled (${provider}) for AI-powered agents`);
+    const provider = process.env.GEMINI_API_KEY ? 'Gemini' : (process.env.OPENROUTER_API_KEY ? 'OpenRouter' : 'OpenAI');
+    console.log(`💡 AI integration enabled (${provider}) for AI-powered agents`);
   } else {
-    console.log('⚠️ No AI API key set - using mock agent responses');
-    console.log('   Set OPENROUTER_API_KEY or OPENAI_API_KEY in .env to enable AI');
+    console.log('⚠️ No AI API key set - Multi-Agent AI System is DISABLED.');
+    console.log('   Set GEMINI_API_KEY, OPENROUTER_API_KEY, or OPENAI_API_KEY in .env to enable AI');
   }
 } catch (error) {
-  console.log('⚠️ AI client not available - using mock agent responses:', error.message);
+  console.log('⚠️ AI client not available:', error.message);
 }
 
 // Global event bus for telemetry streaming
@@ -68,23 +42,23 @@ negotiationEventBus.setMaxListeners(100);
 
 // Agent role definitions with color coding for frontend
 const AGENT_ROLES = {
-  GENETICIST: {
-    id: 'geneticist',
-    name: 'Dr. Gene',
-    specialty: 'Clinical Geneticist',
-    avatar: '🧬',
+  NEPHROLOGIST: {
+    id: 'nephrologist',
+    name: 'Dr. Nephro',
+    specialty: 'Clinical Nephrologist',
+    avatar: '🫘',
     color: '#a855f7',
-    bias: 'precision',
-    priority: ['genomic_match', 'pharmacogenomics', 'precision_medicine']
+    bias: 'renal_protection',
+    priority: ['kidney_function', 'egfr_preservation', 'fluid_balance']
   },
-  PHARMACOLOGIST: {
-    id: 'pharmacologist',
-    name: 'Dr. Pharma',
-    specialty: 'Clinical Pharmacologist',
-    avatar: '💊',
+  CARDIOLOGIST: {
+    id: 'cardiologist',
+    name: 'Dr. Cardio',
+    specialty: 'Clinical Cardiologist',
+    avatar: '❤️',
     color: '#22c55e',
-    bias: 'safety',
-    priority: ['drug_safety', 'interactions', 'dose_optimization']
+    bias: 'cardiac_output',
+    priority: ['heart_failure_management', 'blood_pressure', 'diuresis']
   },
   ENDOCRINOLOGIST: {
     id: 'endocrinologist',
@@ -112,11 +86,11 @@ const NEGOTIATION_STATES = {
   ROUND_PROPOSAL: 'round_proposal',
   CONSTRAINT_REVIEW: 'constraint_review',
   VETO_ISSUED: 'veto_issued',
-  REVISION_REQUIRED: 'revision_required',
   CONSENSUS_REACHED: 'consensus_reached',
   DEADLOCK: 'deadlock',
   HUMAN_INTERVENTION: 'human_intervention',
-  STEERING: 'steering'
+  STEERING: 'steering',
+  ERROR: 'error'
 };
 
 // Active negotiation sessions
@@ -139,8 +113,6 @@ function createSession(sessionId, patient, treatmentContext) {
     consensus: null,
     telemetry: [],
     humanInterventions: [],
-    activeSubAgents: [],
-    toolCalls: [],
     steeringConstraints: [],
     startTime: Date.now(),
     lastActivity: Date.now(),
@@ -177,6 +149,9 @@ function emitTelemetry(sessionId, event) {
  * Helper for AI calls with retry
  */
 async function retryAICall(fn, maxRetries = 1, delayMs = 500) {
+  if (!AI_ENABLED || !openaiClient) {
+    throw new Error('AI System is not configured. Missing API Keys.');
+  }
   let lastError;
   for (let attempt = 1; attempt <= maxRetries + 1; attempt++) {
     try {
@@ -193,95 +168,10 @@ async function retryAICall(fn, maxRetries = 1, delayMs = 500) {
 }
 
 /**
- * Natural pacing delay
+ * AI-Powered Nephrologist Agent
  */
-async function agentThink(ms = 100) {
-  return new Promise(resolve => setTimeout(resolve, ms));
-}
-
-/**
- * FEATURE 3: Emit tool use telemetry
- */
-async function emitToolUse(sessionId, agentId, toolName, action, message) {
-  emitTelemetry(sessionId, {
-    type: 'tool_use',
-    agent: agentId,
-    color: AGENT_ROLES[agentId.toUpperCase()]?.color || '#64748b',
-    tool: toolName,
-    action: action,
-    message: message || `Using ${toolName}...`
-  });
-  await agentThink(600);
-}
-
-/**
- * FEATURE 5: Emit reflection telemetry
- */
-async function emitReflection(sessionId, agentId, patient) {
-  if (!agentMemory) return null;
-  
-  const reflection = agentMemory.generateReflectionMessage(agentId, patient);
-  if (reflection) {
-    emitTelemetry(sessionId, {
-      type: 'reflection',
-      agent: agentId,
-      color: AGENT_ROLES[agentId.toUpperCase()]?.color || '#64748b',
-      message: reflection.message,
-      memoryType: reflection.memoryType
-    });
-    await agentThink(800);
-  }
-  return reflection;
-}
-
-/**
- * FEATURE 2: Check and summon sub-agents
- */
-async function checkAndSummonSubAgents(sessionId, agentId, patient) {
-  if (!agentSwarming) return [];
-  
-  const specialists = agentSwarming.detectRequiredSpecialists(patient);
-  const summonedAgents = [];
-  
-  for (const specialist of specialists.slice(0, 2)) {
-    emitTelemetry(sessionId, {
-      type: 'sub_agent',
-      agent: agentId,
-      subAgent: specialist.id,
-      subAgentName: specialist.name,
-      subAgentEmoji: specialist.avatar,
-      subAgentColor: specialist.color,
-      color: AGENT_ROLES[agentId.toUpperCase()]?.color || '#64748b',
-      message: `${specialist.triggerReason}. Summoning ${specialist.name} Sub-Agent for specialized analysis.`
-    });
-    
-    await agentThink(1000);
-    
-    const response = agentSwarming.generateSubAgentResponse(specialist.id, patient, 'General consultation');
-    
-    emitTelemetry(sessionId, {
-      type: 'sub_agent_response',
-      agent: specialist.id,
-      agentName: specialist.name,
-      color: specialist.color,
-      message: `${specialist.avatar} ${specialist.name}: ${response.ruling}`,
-      ruling: response.ruling,
-      recommendations: response.recommendations,
-      confidence: response.confidence
-    });
-    
-    await agentThink(600);
-    summonedAgents.push({ specialist, response });
-  }
-  
-  return summonedAgents;
-}
-
-/**
- * AI-Powered Geneticist Agent
- */
-async function geneticistAnalyze(session) {
-  const agent = AGENT_ROLES.GENETICIST;
+async function nephrologistAnalyze(session) {
+  const agent = AGENT_ROLES.NEPHROLOGIST;
   const { patient } = session;
   
   emitTelemetry(session.id, {
@@ -290,187 +180,107 @@ async function geneticistAnalyze(session) {
     agentName: agent.name,
     specialty: agent.specialty,
     color: agent.color,
-    message: `Analyzing pharmacogenomic profile...`
+    message: `Analyzing renal function and AKI risk...`
   });
   
-  // FEATURE 5: Check memory for reflections
-  await emitReflection(session.id, agent.id, patient);
-  
-  // FEATURE 3: Tool use - Simulated Database
-  await emitToolUse(session.id, agent.id, 'Simulated Clinical Database',
-    `Querying genetic implications`,
-    'Simulated evidence lookup...');
-  
-  let analysis;
-  
-  if (AI_ENABLED && openaiClient) {
-    try {
-      emitTelemetry(session.id, {
-        type: 'agent_reasoning',
-        agent: agent.id,
-        color: agent.color,
-        message: `Correlating genetic markers with drug response profiles...`
-      });
-      
-      analysis = await retryAICall(
-        () => openaiClient.analyzeWithAgent('geneticist', patient),
-        0, 0
-      );
-      analysis.aiGenerated = true;
-      
-      if (analysis.keyFindings?.length > 0) {
-        emitTelemetry(session.id, {
-          type: 'agent_insight',
-          agent: agent.id,
-          color: agent.color,
-          message: analysis.keyFindings[0],
-          data: { metabolizerStatus: analysis.metabolizerStatus }
-        });
-      }
-      
-      if (analysis.actionableMutations?.length > 0) {
-        emitTelemetry(session.id, {
-          type: 'agent_alert',
-          agent: agent.id,
-          color: agent.color,
-          severity: 'high',
-          message: `⚠️ Actionable findings: ${analysis.actionableMutations.join(', ')}`
-        });
-      }
-      
-    } catch (error) {
-      console.error('Geneticist AI analysis failed:', error);
-      analysis = getMockGeneticistAnalysis(patient);
-      emitTelemetry(session.id, {
-        type: 'agent_fallback',
-        agent: agent.id,
-        color: agent.color,
-        severity: 'warning',
-        message: `⚡ Using enhanced algorithmic analysis (AI unavailable)`
-      });
-    }
-  } else {
-    analysis = getMockGeneticistAnalysis(patient);
-  }
-  
-  // FEATURE 2: Check for sub-agent needs (oncology conditions)
-  const conditions = patient.conditions || patient.medicalHistory?.conditions || [];
-  if (conditions.some(c => c.toLowerCase().includes('cancer') || 
-                          c.toLowerCase().includes('tumor') ||
-                          c.toLowerCase().includes('malignant'))) {
-    await checkAndSummonSubAgents(session.id, agent.id, patient);
-  }
-  
-  emitTelemetry(session.id, {
-    type: 'agent_complete',
-    agent: agent.id,
-    color: agent.color,
-    message: `Analysis complete. Confidence: ${Math.round((analysis.confidence || 0.7) * 100)}%`,
-    proposal: {
-      type: analysis.proposalType || 'Standard',
-      confidence: analysis.confidence || 0.7
-    }
-  });
-  
-  session.agentAnalyses.geneticist = analysis;
-  return analysis;
-}
-
-/**
- * AI-Powered Pharmacologist Agent
- */
-async function pharmacologistAnalyze(session) {
-  const agent = AGENT_ROLES.PHARMACOLOGIST;
-  const { patient } = session;
-  const medications = patient.medications?.filter(m => m.name) || [];
-  
-  emitTelemetry(session.id, {
-    type: 'agent_start',
-    agent: agent.id,
-    agentName: agent.name,
-    specialty: agent.specialty,
-    color: agent.color,
-    message: `Initiating drug safety review...`
-  });
-  
-  // FEATURE 5: Check memory for past interactions learned
-  await emitReflection(session.id, agent.id, patient);
-  
-  // FEATURE 3: Tool use - Simulated Database
-  await emitToolUse(session.id, agent.id, 'Simulated Clinical Database',
-    `Checking drug interactions`,
-    'Simulated evidence lookup...');
-  
-  let analysis;
-  
-  if (AI_ENABLED && openaiClient) {
-    try {
-      emitTelemetry(session.id, {
-        type: 'agent_reasoning',
-        agent: agent.id,
-        color: agent.color,
-        message: `Cross-referencing ${medications.length} medications for interactions...`
-      });
-      
-      analysis = await retryAICall(
-        () => openaiClient.analyzeWithAgent('pharmacologist', patient, {
-          geneticistAnalysis: session.agentAnalyses.geneticist
-        }),
-        0, 0
-      );
-      analysis.aiGenerated = true;
-      
-      if (analysis.interactions?.length > 0) {
-        const majorInteractions = analysis.interactions.filter(i => 
-          i.severity === 'major' || i.severity === 'contraindicated'
-        );
-        if (majorInteractions.length > 0) {
-          emitTelemetry(session.id, {
-            type: 'agent_alert',
-            agent: agent.id,
-            color: agent.color,
-            severity: 'critical',
-            message: `🚨 ${majorInteractions.length} significant drug interaction(s) identified!`
-          });
-        }
-      }
-      
+  try {
+    const analysis = await retryAICall(
+      () => openaiClient.analyzeWithAgent('nephrologist', patient),
+      0, 0
+    );
+    analysis.aiGenerated = true;
+    
+    if (analysis.keyFindings?.length > 0) {
       emitTelemetry(session.id, {
         type: 'agent_insight',
         agent: agent.id,
         color: agent.color,
-        message: analysis.recommendations?.[0] || `Safety assessment complete. Score: ${analysis.safetyScore || 75}/100`
-      });
-      
-    } catch (error) {
-      console.error('Pharmacologist AI analysis failed:', error);
-      analysis = getMockPharmacologistAnalysis(patient);
-      emitTelemetry(session.id, {
-        type: 'agent_fallback',
-        agent: agent.id,
-        color: agent.color,
-        severity: 'warning',
-        message: `⚡ Using enhanced rule-based analysis (AI unavailable)`
+        message: analysis.keyFindings[0],
+        data: { metabolizerStatus: analysis.metabolizerStatus }
       });
     }
-  } else {
-    analysis = getMockPharmacologistAnalysis(patient);
+    
+    emitTelemetry(session.id, {
+      type: 'agent_complete',
+      agent: agent.id,
+      color: agent.color,
+      message: `Analysis complete. Confidence: ${Math.round((analysis.confidence || 0.7) * 100)}%`,
+      proposal: {
+        type: analysis.proposalType || 'Standard',
+        confidence: analysis.confidence || 0.7
+      }
+    });
+    
+    session.agentAnalyses.nephrologist = analysis;
+    return analysis;
+  } catch (error) {
+    emitTelemetry(session.id, {
+      type: 'agent_alert',
+      agent: agent.id,
+      color: agent.color,
+      severity: 'critical',
+      message: `❌ Analysis failed: ${error.message}`
+    });
+    throw error;
   }
+}
+
+/**
+ * AI-Powered Cardiologist Agent
+ */
+async function cardiologistAnalyze(session) {
+  const agent = AGENT_ROLES.CARDIOLOGIST;
+  const { patient } = session;
   
   emitTelemetry(session.id, {
-    type: 'agent_complete',
+    type: 'agent_start',
     agent: agent.id,
+    agentName: agent.name,
+    specialty: agent.specialty,
     color: agent.color,
-    message: `Safety review complete. Safety Score: ${analysis.safetyScore || 75}/100`,
-    proposal: {
-      type: analysis.proposalType || 'Conservative',
-      confidence: analysis.confidence || 0.75,
-      safetyScore: analysis.safetyScore || 75
-    }
+    message: `Initiating cardiovascular assessment...`
   });
   
-  session.agentAnalyses.pharmacologist = analysis;
-  return analysis;
+  try {
+    const analysis = await retryAICall(
+      () => openaiClient.analyzeWithAgent('cardiologist', patient, {
+        nephrologistAnalysis: session.agentAnalyses.nephrologist
+      }),
+      0, 0
+    );
+    analysis.aiGenerated = true;
+    
+    emitTelemetry(session.id, {
+      type: 'agent_insight',
+      agent: agent.id,
+      color: agent.color,
+      message: analysis.recommendations?.[0] || `Safety assessment complete. Score: ${analysis.safetyScore || 75}/100`
+    });
+    
+    emitTelemetry(session.id, {
+      type: 'agent_complete',
+      agent: agent.id,
+      color: agent.color,
+      message: `Safety review complete. Safety Score: ${analysis.safetyScore || 75}/100`,
+      proposal: {
+        type: analysis.proposalType || 'Conservative',
+        confidence: analysis.confidence || 0.75,
+        safetyScore: analysis.safetyScore || 75
+      }
+    });
+    
+    session.agentAnalyses.cardiologist = analysis;
+    return analysis;
+  } catch (error) {
+    emitTelemetry(session.id, {
+      type: 'agent_alert',
+      agent: agent.id,
+      color: agent.color,
+      severity: 'critical',
+      message: `❌ Analysis failed: ${error.message}`
+    });
+    throw error;
+  }
 }
 
 /**
@@ -489,89 +299,48 @@ async function endocrinologistAnalyze(session) {
     message: `Evaluating metabolic profile...`
   });
   
-  // FEATURE 5: Check memory
-  await emitReflection(session.id, agent.id, patient);
-  
-  // FEATURE 3: Tool use - Simulated Database
-  await emitToolUse(session.id, agent.id, 'Simulated Clinical Database',
-    `Computing individualized metabolic targets`,
-    'Simulated evidence lookup...');
-  
-  let analysis;
-  
-  if (AI_ENABLED && openaiClient) {
-    try {
+  try {
+    const analysis = await retryAICall(
+      () => openaiClient.analyzeWithAgent('endocrinologist', patient, {
+        nephrologistAnalysis: session.agentAnalyses.nephrologist,
+        cardiologistAnalysis: session.agentAnalyses.cardiologist
+      }),
+      0, 0
+    );
+    analysis.aiGenerated = true;
+    
+    if (analysis.keyFindings?.length > 0) {
       emitTelemetry(session.id, {
-        type: 'agent_reasoning',
+        type: 'agent_insight',
         agent: agent.id,
         color: agent.color,
-        message: `Assessing glucose (${patient.vitals?.sugar || patient.vitals?.glucose || '?'} mg/dL) and metabolic markers...`
-      });
-      
-      analysis = await retryAICall(
-        () => openaiClient.analyzeWithAgent('endocrinologist', patient, {
-          geneticistAnalysis: session.agentAnalyses.geneticist,
-          pharmacologistAnalysis: session.agentAnalyses.pharmacologist
-        }),
-        0, 0
-      );
-      analysis.aiGenerated = true;
-      
-      if (analysis.keyFindings?.length > 0) {
-        emitTelemetry(session.id, {
-          type: 'agent_insight',
-          agent: agent.id,
-          color: agent.color,
-          message: analysis.keyFindings[0]
-        });
-      }
-      
-      if (analysis.metabolicRisks?.length > 0) {
-        emitTelemetry(session.id, {
-          type: 'agent_alert',
-          agent: agent.id,
-          color: agent.color,
-          severity: 'warning',
-          message: `⚠️ Metabolic consideration: ${analysis.metabolicRisks[0]}`
-        });
-      }
-      
-    } catch (error) {
-      console.error('Endocrinologist AI analysis failed:', error);
-      analysis = getMockEndocrinologistAnalysis(patient);
-      emitTelemetry(session.id, {
-        type: 'agent_fallback',
-        agent: agent.id,
-        color: agent.color,
-        severity: 'warning',
-        message: `⚡ Using algorithmic metabolic analysis (AI unavailable)`
+        message: analysis.keyFindings[0]
       });
     }
-  } else {
-    analysis = getMockEndocrinologistAnalysis(patient);
+    
+    emitTelemetry(session.id, {
+      type: 'agent_complete',
+      agent: agent.id,
+      color: agent.color,
+      message: `Metabolic assessment complete. Confidence: ${Math.round((analysis.confidence || 0.75) * 100)}%`,
+      proposal: {
+        type: analysis.proposalType || 'Standard',
+        confidence: analysis.confidence || 0.75
+      }
+    });
+    
+    session.agentAnalyses.endocrinologist = analysis;
+    return analysis;
+  } catch (error) {
+    emitTelemetry(session.id, {
+      type: 'agent_alert',
+      agent: agent.id,
+      color: agent.color,
+      severity: 'critical',
+      message: `❌ Analysis failed: ${error.message}`
+    });
+    throw error;
   }
-  
-  // FEATURE 2: Check for cardiac sub-agent needs
-  const conditions = patient.conditions || patient.medicalHistory?.conditions || [];
-  if (conditions.some(c => c.toLowerCase().includes('heart') || 
-                          c.toLowerCase().includes('cardiac') ||
-                          c.toLowerCase().includes('coronary'))) {
-    await checkAndSummonSubAgents(session.id, agent.id, patient);
-  }
-  
-  emitTelemetry(session.id, {
-    type: 'agent_complete',
-    agent: agent.id,
-    color: agent.color,
-    message: `Metabolic assessment complete. Confidence: ${Math.round((analysis.confidence || 0.75) * 100)}%`,
-    proposal: {
-      type: analysis.proposalType || 'Standard',
-      confidence: analysis.confidence || 0.75
-    }
-  });
-  
-  session.agentAnalyses.endocrinologist = analysis;
-  return analysis;
 }
 
 /**
@@ -580,8 +349,6 @@ async function endocrinologistAnalyze(session) {
 async function heraAnalyze(session) {
   const agent = AGENT_ROLES.HERA;
   const { patient } = session;
-  const budget = patient.socioEconomic?.monthlyMedicationBudget || 150;
-  const insurance = patient.socioEconomic?.insuranceTier || 'Unknown';
   
   emitTelemetry(session.id, {
     type: 'agent_start',
@@ -592,101 +359,96 @@ async function heraAnalyze(session) {
     message: `Evaluating resource constraints and feasibility...`
   });
   
-  // FEATURE 5: Memory-based reflection (key feature for HERA)
-  const reflection = await emitReflection(session.id, agent.id, patient);
-  
-  // FEATURE 3: Tool use - Simulated Database
-  const medications = patient.medications?.filter(m => m.name) || [];
-  await emitToolUse(session.id, agent.id, 'Simulated Clinical Database',
-    `Querying pricing and formulary coverage`,
-    'Simulated evidence lookup...');
-  
-  let analysis;
-  
-  if (AI_ENABLED && openaiClient) {
-    try {
-      emitTelemetry(session.id, {
-        type: 'agent_reasoning',
-        agent: agent.id,
-        color: agent.color,
-        message: `Analyzing budget ($${budget}/mo) and insurance (${insurance}) constraints...`
-      });
-      
-      analysis = await retryAICall(
-        () => openaiClient.analyzeWithAgent('hera', patient, {
-          geneticistAnalysis: session.agentAnalyses.geneticist,
-          pharmacologistAnalysis: session.agentAnalyses.pharmacologist,
-          endocrinologistAnalysis: session.agentAnalyses.endocrinologist
-        }),
-        0, 0
-      );
-      analysis.aiGenerated = true;
-      
-      if (analysis.veto?.issued) {
-        emitTelemetry(session.id, {
-          type: 'agent_veto',
-          agent: agent.id,
-          color: agent.color,
-          severity: 'critical',
-          message: `🛑 VETO: ${analysis.veto.reason}`
-        });
-        
-        // Record veto for memory
-        if (agentMemory) {
-          agentMemory.recordHeraVeto(patient, {
-            reason: analysis.veto.reason,
-            drugs: analysis.vetoDrugs || [],
-            estimatedCost: analysis.estimatedCost,
-            targetAgent: analysis.targetAgent
-          });
-        }
-        
-        if (analysis.alternatives?.length > 0) {
-          await agentThink(500);
-          emitTelemetry(session.id, {
-            type: 'agent_proposal',
-            agent: agent.id,
-            color: agent.color,
-            message: `Proposing alternative: ${analysis.alternatives[0].suggestion}`
-          });
-        }
-      } else {
-        emitTelemetry(session.id, {
-          type: 'agent_approval',
-          agent: agent.id,
-          color: agent.color,
-          message: `✅ Feasibility approved (Score: ${analysis.feasibilityScore || 75}/100)`
-        });
+  try {
+    const analysis = await retryAICall(
+      () => openaiClient.analyzeWithAgent('hera', patient, {
+        nephrologistAnalysis: session.agentAnalyses.nephrologist,
+        cardiologistAnalysis: session.agentAnalyses.cardiologist,
+        endocrinologistAnalysis: session.agentAnalyses.endocrinologist
+      }),
+      0, 0
+    );
+    analysis.aiGenerated = true;
+    
+    // FAST PATH: Run the C++ Native Knowledge Graph against current medications + recommended protocols
+    let allMedications = [];
+    if (Array.isArray(patient.currentMedications)) {
+      allMedications = [...patient.currentMedications];
+    } else if (Array.isArray(patient.medications)) {
+      allMedications = patient.medications.map(m => typeof m === 'string' ? m : m.name).filter(Boolean);
+    }
+    
+    // Include structurally proposed treatments from all specialist agents
+    const agents = [session.agentAnalyses.nephrologist, session.agentAnalyses.cardiologist, session.agentAnalyses.endocrinologist];
+    agents.forEach(a => {
+      if (a && Array.isArray(a.proposedDrugs)) {
+        allMedications.push(...a.proposedDrugs);
       }
-      
-    } catch (error) {
-      console.error('HERA AI analysis failed:', error);
-      analysis = getMockHeraAnalysis(patient, session.agentAnalyses);
+    });
+
+    // Extract physiological and socioeconomic context
+    const patientContext = {
+      budget: patient.socioEconomic?.monthlyBudget || patient.socioEconomic?.budget || 0,
+      egfr: patient.labs?.egfr || 100
+    };
+    
+    // Execute Native C++ Validation (O(N^2) total verification against constraints)
+    const violations = heraGraph.validateRegimen(allMedications, patientContext);
+    
+    if (violations.length > 0) {
+       // Hard veto override from C++ graph
+       const violationReasons = violations.map(v => 
+          v.drugA === 'BUDGET_EXCEEDED' ? v.drugB : 
+          v.drugB.includes('Constraint') ? `${v.drugA}: ${v.drugB}` : 
+          `${v.drugA} contraindicated with ${v.drugB}`
+       ).join('; ');
+       
+       analysis.veto = {
+           issued: true,
+           reason: `HARD VETO via Native C++ Graph: ${violationReasons}`
+       };
+    }
+    
+    if (analysis.veto?.issued) {
       emitTelemetry(session.id, {
-        type: 'agent_fallback',
+        type: 'agent_veto',
         agent: agent.id,
         color: agent.color,
-        severity: 'warning',
-        message: `⚡ Using cost estimation model (AI unavailable)`
+        severity: 'critical',
+        message: `🛑 VETO: ${analysis.veto.reason}`
+      });
+    } else {
+      emitTelemetry(session.id, {
+        type: 'agent_approval',
+        agent: agent.id,
+        color: agent.color,
+        message: `✅ Feasibility approved (Score: ${analysis.feasibilityScore || 75}/100)`
       });
     }
-  } else {
-    analysis = getMockHeraAnalysis(patient, session.agentAnalyses);
+    
+    emitTelemetry(session.id, {
+      type: 'agent_complete',
+      agent: agent.id,
+      color: agent.color,
+      message: `Feasibility analysis complete. Score: ${analysis.feasibilityScore || 75}%`,
+      response: {
+        feasibilityScore: analysis.feasibilityScore,
+        veto: analysis.veto
+      }
+    });
+    
+    session.agentAnalyses.hera = analysis;
+    return analysis;
+  } catch (error) {
+    emitTelemetry(session.id, {
+      type: 'agent_alert',
+      agent: agent.id,
+      color: agent.color,
+      severity: 'critical',
+      message: `❌ Analysis failed: ${error.message}`
+    });
+    throw error;
   }
-  
-  emitTelemetry(session.id, {
-    type: 'agent_complete',
-    agent: agent.id,
-    color: agent.color,
-    message: `Feasibility analysis complete. Score: ${analysis.feasibilityScore || 75}%`,
-    response: {
-      feasibilityScore: analysis.feasibilityScore,
-      veto: analysis.veto
-    }
-  });
-  
-  session.agentAnalyses.hera = analysis;
-  return analysis;
 }
 
 /**
@@ -699,139 +461,32 @@ async function generateConsensus(session) {
     message: `Building multi-agent consensus...`
   });
   
-  let consensus;
-  
-  if (AI_ENABLED && openaiClient) {
-    try {
-      consensus = await retryAICall(
-        () => openaiClient.generateConsensusRecommendation(
-          session.patient,
-          session.agentAnalyses
-        ),
-        0, 0
-      );
-      consensus.aiGenerated = true;
-      
-      emitTelemetry(session.id, {
-        type: 'consensus_generated',
-        message: `Consensus protocol: ${consensus.recommendedProtocol}`,
-        data: consensus
-      });
-      
-    } catch (error) {
-      console.error('Consensus generation failed:', error);
-      consensus = getMockConsensus(session);
-      emitTelemetry(session.id, {
-        type: 'consensus_fallback',
-        severity: 'warning',
-        message: `⚡ Consensus built from agent analyses`
-      });
-    }
-  } else {
-    consensus = getMockConsensus(session);
+  try {
+    const consensus = await retryAICall(
+      () => openaiClient.generateConsensusRecommendation(
+        session.patient,
+        session.agentAnalyses
+      ),
+      0, 0
+    );
+    consensus.aiGenerated = true;
+    
+    emitTelemetry(session.id, {
+      type: 'consensus_generated',
+      message: `Consensus protocol: ${consensus.recommendedProtocol}`,
+      data: consensus
+    });
+    
+    session.consensus = consensus;
+    return consensus;
+  } catch (error) {
+    emitTelemetry(session.id, {
+      type: 'agent_alert',
+      severity: 'critical',
+      message: `❌ Consensus generation failed: ${error.message}`
+    });
+    throw error;
   }
-  
-  session.consensus = consensus;
-  return consensus;
-}
-
-/**
- * FEATURE 1: Handle HITL steering intervention
- */
-async function handleSteeringIntervention(sessionId, intervention) {
-  const session = activeSessions.get(sessionId);
-  if (!session) throw new Error('Session not found');
-  
-  session.state = NEGOTIATION_STATES.STEERING;
-  session.steeringConstraints.push({
-    timestamp: Date.now(),
-    ...intervention
-  });
-  
-  // Emit the steering event
-  emitTelemetry(sessionId, {
-    type: 'steering_intervention',
-    severity: 'high',
-    message: `🔔 CLINICIAN STEERING: "${intervention.constraint}"`,
-    constraint: intervention.constraint,
-    source: 'clinician'
-  });
-  
-  // Determine which agent should respond based on content
-  const text = intervention.constraint.toLowerCase();
-  let respondingAgent = 'pharmacologist';
-  let responseType = 'acknowledgment';
-  
-  if (text.includes('metformin') || text.includes('gi') || text.includes('stomach') || 
-      text.includes('gastrointestinal') || text.includes('nausea')) {
-    respondingAgent = 'endocrinologist';
-    responseType = 'drug_retraction';
-  } else if (text.includes('cost') || text.includes('expensive') || text.includes('afford') ||
-             text.includes('budget') || text.includes('insurance')) {
-    respondingAgent = 'hera';
-    responseType = 'budget_constraint';
-  } else if (text.includes('gene') || text.includes('cyp') || text.includes('metabolizer') ||
-             text.includes('dna') || text.includes('genetic')) {
-    respondingAgent = 'geneticist';
-    responseType = 'genetic_update';
-  } else if (text.includes('allergy') || text.includes('allergic') || text.includes('reaction') ||
-             text.includes('interaction') || text.includes('side effect')) {
-    respondingAgent = 'pharmacologist';
-    responseType = 'safety_alert';
-  }
-  
-  // Emit agent acknowledgment with flashing alert
-  await agentThink(800);
-  emitTelemetry(sessionId, {
-    type: 'steering_acknowledgment',
-    agent: respondingAgent,
-    color: AGENT_ROLES[respondingAgent.toUpperCase()]?.color,
-    isFlashing: true,
-    message: generateSteeringResponse(respondingAgent, responseType, intervention.constraint),
-    responseType
-  });
-  
-  // Emit re-negotiation signal
-  await agentThink(1200);
-  emitTelemetry(sessionId, {
-    type: 'renegotiation_triggered',
-    message: '🔄 Re-negotiation initiated based on clinician steering...',
-    triggeredBy: respondingAgent,
-    constraint: intervention.constraint
-  });
-  
-  return {
-    acknowledged: true,
-    respondingAgent,
-    responseType,
-    session
-  };
-}
-
-/**
- * Generate context-aware steering response
- */
-function generateSteeringResponse(agentId, responseType, constraint) {
-  const responses = {
-    endocrinologist: {
-      drug_retraction: `⚠️ INTERCEPTING: Patient history noted. Withdrawing Metformin from consideration. Pivoting to SGLT2 inhibitor or DPP-4 inhibitor classes with better GI tolerance.`,
-      default: `Acknowledged. Recalibrating metabolic recommendations based on new information.`
-    },
-    hera: {
-      budget_constraint: `🛡️ CONSTRAINT OVERRIDE: Strictly filtering Tier 3 / Specialty drugs from consensus. Enforcing generic-first policy.`,
-      default: `Budget constraint noted. Re-evaluating cost-effectiveness of all recommendations.`
-    },
-    geneticist: {
-      genetic_update: `🧬 RECALIBRATING: Updating pharmacogenomic mapping based on clinical input. Re-analyzing drug metabolism pathways.`,
-      default: `Genetic consideration noted. Adjusting precision medicine recommendations.`
-    },
-    pharmacologist: {
-      safety_alert: `🚨 SAFETY FLAG: New contraindication identified. Initiating drug interaction re-analysis with updated constraints.`,
-      default: `Safety constraint acknowledged. Re-evaluating medication safety profile.`
-    }
-  };
-  
-  return responses[agentId]?.[responseType] || responses[agentId]?.default || 'Constraint acknowledged. Re-evaluating recommendations.';
 }
 
 /**
@@ -846,96 +501,195 @@ async function runNegotiation(sessionId, patient, treatmentContext = {}) {
     patient: { name: patient.name, disease: patient.disease },
     aiEnabled: AI_ENABLED
   });
+
+  if (!AI_ENABLED) {
+    session.state = NEGOTIATION_STATES.ERROR;
+    emitTelemetry(sessionId, {
+      type: 'error',
+      severity: 'critical',
+      message: `🚫 AI System Disabled: Missing GEMINI_API_KEY, OPENAI_API_KEY or OPENROUTER_API_KEY. Simulated/mock results have been removed to ensure real outputs only.`
+    });
+    return {
+      sessionId,
+      session,
+      result: { consensusReached: false, error: 'AI_NOT_CONFIGURED' },
+      telemetry: session.telemetry,
+      timing: { totalMs: 0 }
+    };
+  }
   
   session.currentRound = 1;
   session.state = NEGOTIATION_STATES.ROUND_PROPOSAL;
   
-  emitTelemetry(sessionId, {
-    type: 'round_start',
-    round: 1,
-    message: `═══════════ ROUND 1: Specialist Analysis (Parallel) ═══════════`
-  });
-  
-  // Phase 1: Run specialist agents in parallel
   const startTime = Date.now();
-  
-  await Promise.all([
-    geneticistAnalyze(session),
-    pharmacologistAnalyze(session),
-    endocrinologistAnalyze(session)
-  ]);
-  
-  console.log(`[Negotiation] Parallel agent analysis completed in ${Date.now() - startTime}ms`);
-  
-  // Phase 2: HERA constraint review
-  emitTelemetry(sessionId, {
-    type: 'phase_start',
-    phase: 'constraint_review',
-    message: `HERA Guardian constraint evaluation...`
-  });
-  
-  session.state = NEGOTIATION_STATES.CONSTRAINT_REVIEW;
-  await heraAnalyze(session);
-  
-  // Phase 3: Handle vetoes
-  const heraAnalysis = session.agentAnalyses.hera;
-  
-  if (heraAnalysis?.veto?.issued) {
-    session.state = NEGOTIATION_STATES.VETO_ISSUED;
-    session.vetoes.push({
+
+  // Create a deterministic hash of the patient's core clinical state
+  const patientState = {
+    id: patient.id || patient.patientId,
+    disease: patient.disease,
+    vitals: patient.vitals,
+    biomarkers: patient.biomarkers,
+    socioEconomic: patient.socioEconomic
+  };
+  const patientHash = crypto.createHash('sha256').update(JSON.stringify(patientState)).digest('hex');
+
+  try {
+    // 1. Check Redis Cache
+    const cachedResult = await getCachedConsensus(patientHash);
+    
+    if (cachedResult) {
+      emitTelemetry(sessionId, {
+        type: 'cache_hit',
+        message: `⚡ Redis Semantic Cache Hit (Hash: ${patientHash.substring(0, 8)}). Bypassing OpenAI.`,
+      });
+      
+      // Emit the cached rounds
+      emitTelemetry(sessionId, {
+        type: 'round_start',
+        round: 1,
+        message: `═══════════ ROUND 1: Cached Specialist Analysis ═══════════`
+      });
+
+      // Rapidly replay agent telemetry
+      for (const [agentKey, analysis] of Object.entries(cachedResult.agentAnalyses)) {
+        if (agentKey !== 'hera') {
+          emitTelemetry(sessionId, {
+            type: 'agent_complete',
+            agent: agentKey,
+            color: AGENT_ROLES[agentKey.toUpperCase()].color,
+            message: `Cached Analysis Applied (Confidence: ${analysis.confidenceScore}%)`,
+            response: { recommendation: analysis.recommendation }
+          });
+        }
+      }
+      
+      emitTelemetry(sessionId, {
+        type: 'agent_complete',
+        agent: 'hera',
+        color: AGENT_ROLES.HERA.color,
+        message: `Cached Feasibility applied. Veto: ${cachedResult.agentAnalyses.hera?.veto?.issued || false}`,
+      });
+
+      const totalTime = Date.now() - startTime;
+      
+      emitTelemetry(sessionId, {
+        type: 'consensus_reached',
+        round: session.currentRound,
+        message: `✅ CONSENSUS ACHIEVED (From Cache)`,
+        consensus: cachedResult.consensus,
+        timing: { totalMs: totalTime }
+      });
+      
+      emitTelemetry(sessionId, {
+        type: 'negotiation_complete',
+        message: `═══════════ NEGOTIATION COMPLETE ═══════════`,
+        totalRounds: session.currentRound,
+        vetoes: 0,
+        consensusReached: true,
+        aiEnabled: AI_ENABLED,
+        timing: { totalMs: totalTime }
+      });
+      
+      return {
+        sessionId,
+        session,
+        result: {
+          consensusReached: true,
+          consensus: cachedResult.consensus,
+          agentAnalyses: cachedResult.agentAnalyses
+        },
+        telemetry: session.telemetry,
+        timing: { totalMs: totalTime }
+      };
+    }
+
+    emitTelemetry(sessionId, {
+      type: 'round_start',
       round: 1,
-      vetoAgent: 'hera',
-      veto: heraAnalysis.veto
+      message: `═══════════ ROUND 1: Specialist Analysis (Parallel) ═══════════`
+    });
+    await Promise.all([
+      nephrologistAnalyze(session),
+      cardiologistAnalyze(session),
+      endocrinologistAnalyze(session)
+    ]);
+    
+    emitTelemetry(sessionId, {
+      type: 'phase_start',
+      phase: 'constraint_review',
+      message: `HERA Guardian constraint evaluation...`
+    });
+    
+    session.state = NEGOTIATION_STATES.CONSTRAINT_REVIEW;
+    await heraAnalyze(session);
+    
+    const heraAnalysis = session.agentAnalyses.hera;
+    if (heraAnalysis?.veto?.issued) {
+      session.state = NEGOTIATION_STATES.VETO_ISSUED;
+      session.vetoes.push({
+        round: 1,
+        vetoAgent: 'hera',
+        veto: heraAnalysis.veto
+      });
+    }
+    
+    const consensus = await generateConsensus(session);
+    session.state = NEGOTIATION_STATES.CONSENSUS_REACHED;
+    
+    // Write successful consensus to Redis Cache
+    await setCachedConsensus(patientHash, {
+      consensus,
+      agentAnalyses: session.agentAnalyses
+    });
+    
+    const totalTime = Date.now() - startTime;
+    
+    emitTelemetry(sessionId, {
+      type: 'consensus_reached',
+      round: session.currentRound,
+      message: `✅ CONSENSUS ACHIEVED`,
+      consensus,
+      timing: { totalMs: totalTime }
     });
     
     emitTelemetry(sessionId, {
-      type: 'revision_adaptation',
-      round: 1,
-      message: `Adjusting recommendations based on HERA constraints...`
-    });
-  }
-  
-  // Phase 4: Generate consensus
-  const consensus = await generateConsensus(session);
-  
-  session.state = NEGOTIATION_STATES.CONSENSUS_REACHED;
-  
-  const totalTime = Date.now() - startTime;
-  console.log(`[Negotiation] Total negotiation completed in ${totalTime}ms`);
-  
-  emitTelemetry(sessionId, {
-    type: 'consensus_reached',
-    round: session.currentRound,
-    message: `✅ CONSENSUS ACHIEVED`,
-    consensus,
-    timing: { totalMs: totalTime }
-  });
-  
-  emitTelemetry(sessionId, {
-    type: 'negotiation_complete',
-    message: `═══════════ NEGOTIATION COMPLETE ═══════════`,
-    totalRounds: session.currentRound,
-    vetoes: session.vetoes.length,
-    consensusReached: true,
-    aiEnabled: AI_ENABLED,
-    timing: { totalMs: totalTime }
-  });
-  
-  return {
-    sessionId,
-    session,
-    result: {
+      type: 'negotiation_complete',
+      message: `═══════════ NEGOTIATION COMPLETE ═══════════`,
+      totalRounds: session.currentRound,
+      vetoes: session.vetoes.length,
       consensusReached: true,
-      consensus,
-      agentAnalyses: session.agentAnalyses
-    },
-    telemetry: session.telemetry,
-    timing: { totalMs: totalTime }
-  };
+      aiEnabled: AI_ENABLED,
+      timing: { totalMs: totalTime }
+    });
+    
+    return {
+      sessionId,
+      session,
+      result: {
+        consensusReached: true,
+        consensus,
+        agentAnalyses: session.agentAnalyses
+      },
+      telemetry: session.telemetry,
+      timing: { totalMs: totalTime }
+    };
+  } catch (error) {
+    session.state = NEGOTIATION_STATES.ERROR;
+    const totalTime = Date.now() - startTime;
+    return {
+      sessionId,
+      session,
+      result: { consensusReached: false, error: error.message },
+      telemetry: session.telemetry,
+      timing: { totalMs: totalTime }
+    };
+  }
 }
 
 /**
- * Inject human intervention
+ * Handle human intervention (HITL Steering)
+ * Removed mock AI generation; if this is called, it just passes it to next cycle if we implement one, 
+ * but for this simplified version, we just log it.
  */
 async function injectHumanIntervention(sessionId, intervention) {
   const session = activeSessions.get(sessionId);
@@ -946,11 +700,6 @@ async function injectHumanIntervention(sessionId, intervention) {
     timestamp: Date.now(),
     ...intervention
   });
-  
-  // Check if this is a steering intervention
-  if (intervention.type === 'steering' || intervention.constraint) {
-    return handleSteeringIntervention(sessionId, intervention);
-  }
   
   emitTelemetry(sessionId, {
     type: 'human_intervention',
@@ -971,171 +720,9 @@ function getSessionTelemetry(sessionId) {
   return session ? session.telemetry : [];
 }
 
-// ============== MOCK FUNCTIONS ==============
-// Keeping these for when AI is unavailable
-
-function getMockGeneticistAnalysis(patient) {
-  const pgx = patient.biomarkers?.pharmacogenomics || {};
-  const cyp2d6 = pgx.cyp2d6 || pgx.CYP2D6 || 'Normal Metabolizer';
-  const cyp2c19 = pgx.cyp2c19 || pgx.CYP2C19 || 'Normal Metabolizer';
-  
-  const keyFindings = [];
-  const actionableMutations = [];
-  
-  if (cyp2d6.toLowerCase().includes('poor')) {
-    keyFindings.push(`CYP2D6 Poor Metabolizer: Reduced efficacy with codeine/tramadol; increased levels with beta-blockers`);
-    actionableMutations.push('CYP2D6 PM');
-  }
-  if (cyp2c19.toLowerCase().includes('poor')) {
-    keyFindings.push(`CYP2C19 Poor Metabolizer: Reduced clopidogrel efficacy; consider prasugrel/ticagrelor`);
-    actionableMutations.push('CYP2C19 PM');
-  }
-  
-  if (keyFindings.length === 0) {
-    keyFindings.push('Standard pharmacogenomic profile. No significant metabolizer variants detected.');
-  }
-  
-  return {
-    analysis: `Pharmacogenomic profile analyzed for ${patient.name || 'patient'}.`,
-    metabolizerStatus: { cyp2d6, cyp2c19 },
-    actionableMutations,
-    keyFindings,
-    proposalType: actionableMutations.length > 0 ? 'Conservative' : 'Standard',
-    confidence: 0.75,
-    mockGenerated: true
-  };
-}
-
-function getMockPharmacologistAnalysis(patient) {
-  const medications = patient.medications?.filter(m => m.name) || [];
-  const interactions = [];
-  const criticalAlerts = [];
-  
-  // Check common interactions
-  const medNames = medications.map(m => (m.name || '').toLowerCase());
-  
-  if (medNames.some(m => m.includes('warfarin')) && medNames.some(m => m.includes('aspirin'))) {
-    interactions.push({ drugs: ['Warfarin', 'Aspirin'], severity: 'major', mechanism: 'Bleeding risk' });
-    criticalAlerts.push('Major interaction: Warfarin + Aspirin');
-  }
-  
-  let safetyScore = 100 - (interactions.filter(i => i.severity === 'major').length * 15);
-  safetyScore = Math.max(40, Math.min(100, safetyScore));
-  
-  return {
-    analysis: `Safety review of ${medications.length} medications.`,
-    interactions,
-    safetyScore,
-    criticalAlerts,
-    recommendations: criticalAlerts.length > 0 ? ['Review drug interactions'] : ['Continue current regimen with monitoring'],
-    proposalType: criticalAlerts.length > 0 ? 'Conservative' : 'Standard',
-    confidence: 0.78,
-    mockGenerated: true
-  };
-}
-
-function getMockEndocrinologistAnalysis(patient) {
-  const vitals = patient.vitals || {};
-  const glucose = vitals.sugar || vitals.glucose || 120;
-  const keyFindings = [];
-  const metabolicRisks = [];
-  
-  if (glucose >= 180) {
-    keyFindings.push(`Elevated glucose (${glucose} mg/dL) - poor glycemic control`);
-    metabolicRisks.push('Hyperglycemia risk');
-  } else if (glucose >= 126) {
-    keyFindings.push(`Glucose ${glucose} mg/dL - suboptimal control`);
-  } else {
-    keyFindings.push(`Glucose ${glucose} mg/dL - adequate control`);
-  }
-  
-  return {
-    analysis: `Metabolic assessment for ${patient.name || 'patient'}.`,
-    metabolicStatus: { diabetesControl: glucose >= 180 ? 'Poor' : glucose >= 126 ? 'Suboptimal' : 'Adequate' },
-    keyFindings,
-    metabolicRisks,
-    proposalType: glucose >= 180 ? 'Aggressive' : 'Standard',
-    confidence: 0.76,
-    mockGenerated: true
-  };
-}
-
-function getMockHeraAnalysis(patient, proposals) {
-  const budget = patient.socioEconomic?.monthlyMedicationBudget || 150;
-  const medications = patient.medications?.filter(m => m.name) || [];
-  
-  // Estimate costs
-  let totalCost = medications.length * 50;
-  const expensiveMeds = medications.filter(m => 
-    ['ozempic', 'jardiance', 'humira', 'keytruda'].some(e => (m.name || '').toLowerCase().includes(e))
-  );
-  
-  if (expensiveMeds.length > 0) {
-    totalCost += expensiveMeds.length * 500;
-  }
-  
-  const veto = totalCost > budget * 2 ? {
-    issued: true,
-    reason: `Monthly cost estimate $${totalCost} exceeds patient budget ($${budget}/mo)`,
-    constraints: ['Budget exceeded']
-  } : { issued: false };
-  
-  const alternatives = veto.issued ? [{
-    category: 'Generic',
-    suggestion: 'Consider generic alternatives to reduce cost',
-    costSavings: `Up to $${Math.round(totalCost * 0.6)}/month`
-  }] : [];
-  
-  return {
-    analysis: `Resource constraints evaluated. Est. cost: $${totalCost} vs budget $${budget}.`,
-    feasibilityScore: veto.issued ? 45 : 85,
-    veto,
-    alternatives,
-    constraintEvaluation: { budget: { status: veto.issued ? 'exceeded' : 'within' } },
-    confidence: 0.82,
-    mockGenerated: true
-  };
-}
-
-function getMockConsensus(session) {
-  const analyses = session.agentAnalyses;
-  const medications = session.patient.medications?.filter(m => m.name) || [];
-  
-  const avgConfidence = (
-    (analyses.geneticist?.confidence || 0.5) +
-    (analyses.pharmacologist?.confidence || 0.5) +
-    (analyses.endocrinologist?.confidence || 0.5) +
-    (analyses.hera?.confidence || 0.5)
-  ) / 4;
-  
-  return {
-    recommendedProtocol: 'Personalized Treatment Optimization Protocol',
-    protocolDetails: 'Maintain current regimen with specified monitoring.',
-    rationale: `Based on ${Object.keys(analyses).length}-agent analysis.`,
-    medications: medications.map(m => ({
-      name: m.name,
-      dose: m.dosage,
-      frequency: m.frequency,
-      notes: 'Continue as prescribed'
-    })),
-    monitoring: ['Regular follow-up', 'Lab monitoring as indicated'],
-    precautions: ['Report adverse effects', 'Maintain medication adherence'],
-    confidence: avgConfidence,
-    consensusLevel: 'Majority',
-    agentAgreement: {
-      geneticist: 'agreed',
-      pharmacologist: 'agreed',
-      endocrinologist: 'agreed',
-      hera: analyses.hera?.veto?.issued ? 'vetoed_then_adjusted' : 'approved'
-    },
-    mockGenerated: true
-  };
-}
-
 module.exports = {
   runNegotiation,
   injectHumanIntervention,
-  handleSteeringIntervention,
   getSession,
   getSessionTelemetry,
   createSession,

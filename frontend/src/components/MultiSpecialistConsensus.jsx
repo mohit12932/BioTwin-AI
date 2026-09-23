@@ -46,12 +46,13 @@ const MultiSpecialistConsensus = ({
   const { id: patientId } = useParams();
   
   const [agentStates, setAgentStates] = useState({
-    pharmacologist: { active: false, processing: false },
-    geneticist: { active: false, processing: false },
+    cardiologist: { active: false, processing: false },
+    nephrologist: { active: false, processing: false },
     endocrinologist: { active: false, processing: false },
     hera: { active: false, processing: false },
     'lead-physician': { active: false, processing: false },
   });
+  const [vetoOverridden, setVetoOverridden] = useState(false);
 
   // Extract socio-economic data from patient - DEFAULT to $150 for demo
   const socioEconomic = patient?.socioEconomic || {};
@@ -88,7 +89,7 @@ const MultiSpecialistConsensus = ({
   // Simulate agent processing animation with HERA
   useEffect(() => {
     if (isSimulating) {
-      const agents = ['geneticist', 'pharmacologist', 'endocrinologist', 'hera', 'lead-physician'];
+      const agents = ['nephrologist', 'cardiologist', 'endocrinologist', 'hera', 'lead-physician'];
       const timeouts = [];
       
       agents.forEach((agent, index) => {
@@ -114,8 +115,8 @@ const MultiSpecialistConsensus = ({
     } else if (simulationResult) {
       // Only update if we have a result and not simulating
       const newState = {
-        pharmacologist: { active: true, processing: false },
-        geneticist: { active: true, processing: false },
+        cardiologist: { active: true, processing: false },
+        nephrologist: { active: true, processing: false },
         endocrinologist: { active: true, processing: false },
         hera: { active: true, processing: false },
         'lead-physician': { active: true, processing: false },
@@ -127,34 +128,31 @@ const MultiSpecialistConsensus = ({
   // Generate agent analysis with CORRECTED logic
   const generateAgentData = () => {
     return {
-      // GENETICIST: Focuses ONLY on genomic variants - FIXED to detect Poor Metabolizer
-      geneticist: {
-        name: 'Geneticist Agent (GA)',
-        role: 'Genomic Analysis',
+      nephrologist: {
+        name: 'Nephrologist Agent',
+        role: 'Renal Function & Fluid Balance',
         dataAnalyzed: [
-          genomicVariant,
-          'Pharmacogenomic Profile',
-          'Toxicity Risk Assessment',
+          'eGFR & Creatinine Clearance',
+          'Electrolyte Panel (K+, Na+)',
+          'Renal Toxicity Risk Assessment',
         ],
-        rationale: isPoorMetabolizer
-          ? `${genomicVariant} variant detected. Patient CANNOT safely process standard protocol dosages. High risk of drug accumulation and toxicity. Biological optimum requires significantly lower starting dose.`
-          : 'Normal metabolizer status confirmed. No pharmacogenomic contraindications for standard protocol.',
-        position: isPoorMetabolizer ? 'Reject Standard Protocol' : 'Approve Standard',
+        rationale: 'Patient exhibits normal renal function (eGFR > 60). No acute kidney injury markers detected. Kidneys can safely clear standard protocol dosages without risking nephrotoxicity.',
+        position: 'Approve Standard Protocol',
       },
       
-      // PHARMACOLOGIST: Focuses ONLY on drug interactions - FIXED to not mention glucose
-      pharmacologist: {
-        name: 'Pharmacologist Agent (PA)',
-        role: 'Drug Interactions',
+      // CARDIOLOGIST
+      cardiologist: {
+        name: 'Cardiologist Agent',
+        role: 'Cardiovascular Hemodynamics',
         dataAnalyzed: [
           `${medications.join(' + ')}`,
-          'CYP2C19 Cross-Reference',
+          'Ejection Fraction & BP Trends',
           'Hypotensive Risk Matrix',
         ],
-        rationale: isPoorMetabolizer && hasLisinopril
-          ? `INTERACTION WARNING: ${medications.join(' + ')} combined with ${genomicVariant} status significantly increases hypotensive risk. Standard Lisinopril dosage unsafe. Recommend severe titration starting at 2.5mg.`
-          : 'No significant drug interactions detected. Current medication profile appears compatible with standard protocol.',
-        position: isPoorMetabolizer ? 'Recommend Dosage Titration' : 'Approve Standard',
+        rationale: hasLisinopril
+          ? `INTERACTION WARNING: ${medications.join(' + ')} combined with current hemodynamics significantly increases hypotensive risk. Standard Lisinopril dosage may cause syncope. Recommend conservative titration.`
+          : 'Hemodynamics are stable. Cardiac output is sufficient. No significant cardiovascular contraindications detected.',
+        position: hasLisinopril ? 'Recommend Dosage Titration' : 'Approve Standard',
       },
       
       // ENDOCRINOLOGIST: Focuses on metabolic status - this is where glucose belongs
@@ -246,16 +244,16 @@ const MultiSpecialistConsensus = ({
         <p className="text-xs font-semibold text-slate-400 uppercase tracking-wider mb-3">Clinical Specialists (Utopian)</p>
         <div className="grid grid-cols-1 md:grid-cols-3 gap-4">
           <AgentCard
-            type="geneticist"
-            {...agentData.geneticist}
-            isActive={agentStates.geneticist.active}
-            isProcessing={agentStates.geneticist.processing}
+            type="nephrologist"
+            {...agentData.nephrologist}
+            isActive={agentStates.nephrologist.active}
+            isProcessing={agentStates.nephrologist.processing}
           />
           <AgentCard
-            type="pharmacologist"
-            {...agentData.pharmacologist}
-            isActive={agentStates.pharmacologist.active}
-            isProcessing={agentStates.pharmacologist.processing}
+            type="cardiologist"
+            {...agentData.cardiologist}
+            isActive={agentStates.cardiologist.active}
+            isProcessing={agentStates.cardiologist.processing}
           />
           <AgentCard
             type="endocrinologist"
@@ -322,15 +320,33 @@ const MultiSpecialistConsensus = ({
                 }`}>
                   {consensus.confidence}% Confidence
                 </span>
-                {consensus.hasVeto && (
+                {consensus.hasVeto && !vetoOverridden && (
                   <span className="px-3 py-1 rounded-full bg-rose-600 text-white text-xs font-bold flex items-center gap-1">
                     <Ban className="h-3 w-3" /> HERA VETO APPLIED
                   </span>
                 )}
+                {consensus.hasVeto && vetoOverridden && (
+                  <span className="px-3 py-1 rounded-full bg-orange-500 text-white text-xs font-bold flex items-center gap-1">
+                    <AlertTriangle className="h-3 w-3" /> VETO OVERRIDDEN BY PHYSICIAN
+                  </span>
+                )}
               </div>
-              <p className={`text-sm leading-relaxed mb-4 ${consensus.hasVeto ? 'text-rose-800' : 'text-emerald-800'}`}>
+              <p className={`text-sm leading-relaxed mb-4 ${consensus.hasVeto && !vetoOverridden ? 'text-rose-800' : 'text-emerald-800'}`}>
                 {consensus.reasoning}
               </p>
+              
+              {consensus.hasVeto && !vetoOverridden && (
+                <div className="mb-4">
+                  <button 
+                    onClick={() => setVetoOverridden(true)}
+                    className="flex items-center gap-2 bg-rose-700 hover:bg-rose-800 text-white px-4 py-2 rounded-lg font-bold text-sm transition-colors shadow-sm"
+                  >
+                    <AlertTriangle className="h-4 w-4" />
+                    Acknowledge & Override Veto
+                  </button>
+                  <p className="text-xs text-rose-600 mt-2 font-medium">By overriding, you assume clinical responsibility for bypassing the HERA constraint.</p>
+                </div>
+              )}
               <div className={`flex items-center gap-4 pt-3 border-t ${consensus.hasVeto ? 'border-rose-300' : 'border-emerald-200'}`}>
                 <div className={`flex items-center gap-2 text-sm ${consensus.hasVeto ? 'text-rose-700' : 'text-emerald-700'}`}>
                   <CheckCircle2 className="h-4 w-4" />

@@ -8,11 +8,11 @@ import { Terminal, Brain, AlertTriangle, CheckCircle, XCircle, Clock, User, Zap,
  */
 
 const AGENT_COLORS = {
-  geneticist: { bg: 'bg-purple-500/20', border: 'border-purple-500/40', text: 'text-purple-300', icon: '🧬' },
+  nephrologist: { bg: 'bg-purple-500/20', border: 'border-purple-500/40', text: 'text-purple-300', icon: '🧬' },
   oncologist: { bg: 'bg-red-500/20', border: 'border-red-500/40', text: 'text-red-300', icon: '🎗️' },
   cardiologist: { bg: 'bg-pink-500/20', border: 'border-pink-500/40', text: 'text-pink-300', icon: '❤️' },
   endocrinologist: { bg: 'bg-amber-500/20', border: 'border-amber-500/40', text: 'text-amber-300', icon: '⚗️' },
-  pharmacologist: { bg: 'bg-green-500/20', border: 'border-green-500/40', text: 'text-green-300', icon: '💊' },
+  cardiologist: { bg: 'bg-green-500/20', border: 'border-green-500/40', text: 'text-green-300', icon: '💊' },
   hera: { bg: 'bg-cyan-500/20', border: 'border-cyan-500/40', text: 'text-cyan-300', icon: '🛡️' },
   patient_advocate: { bg: 'bg-blue-500/20', border: 'border-blue-500/40', text: 'text-blue-300', icon: '👤' },
   system: { bg: 'bg-slate-500/20', border: 'border-slate-500/40', text: 'text-slate-300', icon: '⚙️' },

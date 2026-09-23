@@ -12,8 +12,14 @@ const router = express.Router();
 const { v4: uuidv4 } = require('uuid');
 
 const negotiationService = require('../services/agentNegotiation.service');
-const { getPatientById } = require('../services/explainability.service');
-const mockDB = require('../data/mockDatabase');
+const Patient = require('../models/Patient');
+
+async function getPatientById(id) {
+  if (!isMongoReady()) {
+    throw new Error('MongoDB is required but not connected.');
+  }
+  return await Patient.findOne({ patientId: id }).lean();
+}
 const Negotiation = require('../models/Negotiation');
 const { isMongoReady } = require('../config/mongo');
 

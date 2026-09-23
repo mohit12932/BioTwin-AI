@@ -100,12 +100,14 @@ const validateVitals = (vitals) => {
     bpDiastolic: { min: 30, max: 150 },
     sugar: { min: 20, max: 600 },
     spO2: { min: 50, max: 100 },
-    temperature: { min: 90, max: 110 }
+    temperature: { min: 30, max: 115 } // Allow both Celsius and Fahrenheit
   };
 
   for (const [key, range] of Object.entries(ranges)) {
-    if (vitals[key] !== undefined) {
-      const value = Number(vitals[key]);
+    const val = vitals[key];
+    if (val === undefined || val === null || val === '' || val === 0 || val === '0') continue;
+    
+    const value = Number(val);
       if (isNaN(value)) {
         return { valid: false, error: `${key} must be a number` };
       }
@@ -113,7 +115,6 @@ const validateVitals = (vitals) => {
         return { valid: false, error: `${key} must be between ${range.min} and ${range.max}` };
       }
       sanitized[key] = value;
-    }
   }
 
   return { valid: true, sanitized };
@@ -129,27 +130,27 @@ const validateLifestyle = (lifestyle) => {
     return { valid: true, sanitized: {} }; // Lifestyle is optional
   }
 
-  const allowedSmoking = ['Yes', 'No', 'Past'];
-  const allowedExercise = ['None', 'Rarely', 'Moderate', 'Active'];
-  const allowedAlcohol = ['Yes', 'No', 'Occasional', 'Occasionally', 'Rarely', 'Frequently'];
+  const allowedSmoking = ['Yes', 'No', 'Past', 'Unknown', ''];
+  const allowedExercise = ['None', 'Rarely', 'Moderate', 'Active', 'Unknown', ''];
+  const allowedAlcohol = ['Yes', 'No', 'Occasional', 'Occasionally', 'Rarely', 'Frequently', 'Unknown', ''];
 
   const sanitized = {};
 
-  if (lifestyle.smoking !== undefined) {
+  if (lifestyle.smoking !== undefined && lifestyle.smoking !== null) {
     if (!allowedSmoking.includes(lifestyle.smoking)) {
       return { valid: false, error: `smoking must be one of: ${allowedSmoking.join(', ')}` };
     }
     sanitized.smoking = lifestyle.smoking;
   }
 
-  if (lifestyle.exercise !== undefined) {
+  if (lifestyle.exercise !== undefined && lifestyle.exercise !== null) {
     if (!allowedExercise.includes(lifestyle.exercise)) {
       return { valid: false, error: `exercise must be one of: ${allowedExercise.join(', ')}` };
     }
     sanitized.exercise = lifestyle.exercise;
   }
 
-  if (lifestyle.alcohol !== undefined) {
+  if (lifestyle.alcohol !== undefined && lifestyle.alcohol !== null) {
     if (!allowedAlcohol.includes(lifestyle.alcohol)) {
       return { valid: false, error: `alcohol must be one of: ${allowedAlcohol.join(', ')}` };
     }

@@ -1,6 +1,5 @@
 const express = require('express');
 const router = express.Router();
-const mockDB = require('../data/mockDatabase');
 const { v4: uuidv4 } = require('uuid');
 const intakeService = require('../services/intake.service');
 const Patient = require('../models/Patient');
@@ -20,37 +19,7 @@ router.post('/parse-lab', (req, res) => {
   }
 });
 
-router.get('/demo-cases', (req, res) => {
-  res.json(intakeService.getDemoCases().map(({ slug, title, disease }) => ({ slug, title, disease })));
-});
 
-router.post('/demo-seed/:slug', async (req, res) => {
-  const demo = intakeService.getDemoCases().find((item) => item.slug === req.params.slug);
-  if (!demo) return res.status(404).json({ error: 'Demo case not found' });
-
-  try {
-    const structuredProfile = intakeService.processIntake(demo.payload);
-    const newPatient = { id: structuredProfile.patientId, ...structuredProfile };
-    mockDB.addPatient(newPatient);
-
-    try {
-      if (isMongoReady()) {
-        await Patient.create(newPatient);
-      }
-    } catch (dbErr) {
-      console.warn('MongoDB save failed for demo case:', dbErr.message);
-    }
-
-    res.status(201).json({
-      patientId: newPatient.patientId,
-      demo: { slug: demo.slug, title: demo.title, disease: demo.disease },
-      message: 'Demo patient seeded successfully',
-    });
-  } catch (error) {
-    console.error('Demo seed error:', error);
-    res.status(500).json({ error: 'Failed to seed demo patient.' });
-  }
-});
 
 // Add new Intake Endpoint
 router.post('/intake', async (req, res) => {
@@ -66,23 +35,17 @@ router.post('/intake', async (req, res) => {
     // Process and normalize data via business logic
     const structuredProfile = intakeService.processIntake(rawData);
     
-    // Store in our mock database under the generated generic interface ID
+    // Create new patient object
     const newPatient = {
-      id: structuredProfile.patientId, // for old compatibility
       ...structuredProfile
     };
     
-    // Save to Mock DB for legacy
-    mockDB.addPatient(newPatient);
-    
     // Save to MongoDB
-    try {
-      if (isMongoReady()) {
-      await Patient.create(newPatient);
-      }
-    } catch (dbErr) {
-      console.warn("MongoDB save failed, relying on mockDB:", dbErr.message);
+    if (!isMongoReady()) {
+      return res.status(503).json({ error: 'MongoDB is required but not connected.' });
     }
+    
+    await Patient.create(newPatient);
     
     // We send back exactly what is required for the Next Layer
     res.status(201).json({
@@ -119,25 +82,26 @@ router.post('/', async (req, res) => {
     return res.status(400).json({ error: "Age must be a number between 0 and 150" });
   }
 
-  // Both 'id' (legacy mockDB key) and 'patientId' (Mongoose schema required field) must be set
+  // 'patientId' (Mongoose schema required field) must be set
   const generatedId = uuidv4();
   const newPatient = {
-    id: generatedId,
-    patientId: generatedId,   // <-- required by Patient schema
+    patientId: generatedId,
     ...patientData,
     name: sanitizedName,
     age: age,
     createdAt: new Date()
   };
 
-  mockDB.addPatient(newPatient);
+  if (!isMongoReady()) {
+    return res.status(503).json({ error: 'MongoDB is required but not connected.' });
+  }
+
   try {
-    if (isMongoReady()) {
-      await Patient.create(newPatient);
-      console.log(`Patient saved to MongoDB: ${newPatient.patientId}`);
-    }
+    await Patient.create(newPatient);
+    console.log(`Patient saved to MongoDB: ${newPatient.patientId}`);
   } catch(e) {
     console.warn('MongoDB save failed for patient:', e.message);
+    return res.status(500).json({ error: 'Database error' });
   }
   
   res.status(201).json(newPatient);
@@ -152,19 +116,15 @@ router.get('/:id', async (req, res) => {
 
   let patient;
   try {
-     if (isMongoReady()) {
+     if (!isMongoReady()) {
+        return res.status(503).json({ error: 'MongoDB is required but not connected.' });
+     }
      // try Mongo first
       const queryPatient = await Patient.findOne({ patientId: req.params.id });
-      // fallback if using generic ID field in some places
       if (queryPatient) patient = queryPatient;
-      if (!patient) patient = await Patient.findOne({ id: req.params.id });
-     }
   } catch(e) {
     console.warn('MongoDB query failed for patient lookup:', e.message);
-  }
-  
-  if (!patient) {
-     patient = mockDB.getPatient(req.params.id);
+    return res.status(500).json({ error: 'Database error' });
   }
   
   if (!patient) return res.status(404).json({ error: "Patient not found" });
@@ -174,14 +134,14 @@ router.get('/:id', async (req, res) => {
 router.get('/', async (req, res) => {
   let patients = [];
   try {
-     if (isMongoReady()) {
-      patients = await Patient.find({});
+     if (!isMongoReady()) {
+        return res.status(503).json({ error: 'MongoDB is required but not connected.' });
      }
+     patients = await Patient.find({});
   } catch(e) {
     console.warn('MongoDB query failed for patient list:', e.message);
+    return res.status(500).json({ error: 'Database error' });
   }
-  
-  if (patients.length === 0) patients = mockDB.getAllPatients();
   
   res.json(patients);
 });

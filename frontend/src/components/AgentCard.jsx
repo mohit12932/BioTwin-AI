@@ -1,24 +1,24 @@
 "use client";
 import React from 'react';
-import { Pill, Dna, Activity, Stethoscope, CheckCircle2, AlertTriangle, ArrowRight, DollarSign, Ban } from 'lucide-react';
+import { HeartPulse, Droplet, Activity, Stethoscope, CheckCircle2, AlertTriangle, ArrowRight, DollarSign, Ban } from 'lucide-react';
 
 const agentIcons = {
-  pharmacologist: Pill,
-  geneticist: Dna,
+  cardiologist: HeartPulse,
+  nephrologist: Droplet,
   endocrinologist: Activity,
   'lead-physician': Stethoscope,
   hera: DollarSign,
 };
 
 const agentColors = {
-  pharmacologist: {
+  cardiologist: {
     bg: 'bg-violet-50',
     border: 'border-l-violet-500',
     text: 'text-violet-700',
     iconBg: 'bg-violet-100',
     badge: 'bg-violet-100 text-violet-700',
   },
-  geneticist: {
+  nephrologist: {
     bg: 'bg-cyan-50',
     border: 'border-l-cyan-500',
     text: 'text-cyan-700',
@@ -49,7 +49,7 @@ const agentColors = {
 };
 
 const AgentCard = ({
-  type = 'pharmacologist',
+  type = 'cardiologist',
   name = 'Agent',
   role = 'Specialist',
   dataAnalyzed = [],
@@ -60,8 +60,8 @@ const AgentCard = ({
   isProcessing = false,
   className = '',
 }) => {
-  const Icon = agentIcons[type] || Pill;
-  const colors = agentColors[type] || agentColors.pharmacologist;
+  const Icon = agentIcons[type] || HeartPulse;
+  const colors = agentColors[type] || agentColors.cardiologist;
   const isHeraAgent = type === 'hera';
 
   return (
