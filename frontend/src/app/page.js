@@ -38,6 +38,7 @@ export default function Home() {
 
   React.useEffect(() => {
     if (typeof window !== 'undefined' && localStorage.getItem('biotwin_token')) {
+      // eslint-disable-next-line react-hooks/set-state-in-effect
       setIsLoggedIn(true);
     }
     apiClient.get('/patient/demo-cases')
@@ -69,7 +70,7 @@ export default function Home() {
           <div className="grid grid-cols-1 gap-0 lg:grid-cols-[1.3fr_0.9fr]">
             <div className="p-8 md:p-12">
               <div className="mb-5 inline-flex items-center gap-2 rounded-full px-4 py-2 text-xs font-bold uppercase tracking-[0.22em] bg-lime-100 text-lime-700">
-                <Activity className="h-4 w-4" /> Precision Medicine Workspace
+                <img src="/logo.jpg" alt="BioTwin Logo" className="h-5 w-5 rounded-full object-cover bg-white" /> Precision Medicine Workspace
               </div>
               <h1 className="max-w-3xl text-4xl font-bold tracking-tight md:text-6xl text-slate-900">
                 BioTwin AI turns patient data into a treatment-safe digital twin.

@@ -64,7 +64,191 @@ You cannot trust LLMs with hard mathematical constraints like "$150/mo budget" o
 
 ---
 
+<<<<<<< HEAD
 ## ⚙️ Local Setup & Installation
+=======
+## Architecture
+
+### System Overview
+
+```
+┌─────────────────────────────────────────────────────────────────────────────┐
+│                           BIOTWIN AI PLATFORM                                │
+├─────────────────────────────────────────────────────────────────────────────┤
+│                                                                              │
+│  ┌─────────────┐    ┌─────────────┐    ┌─────────────┐    ┌─────────────┐  │
+│  │   LAYER 1   │    │   LAYER 2   │    │   LAYER 3   │    │   LAYER 4   │  │
+│  │   Patient   │───▶│   Digital   │───▶│  Clinical   │───▶│  Learning   │  │
+│  │   Intake    │    │ Twin Engine │    │  Dashboard  │    │    Loop     │  │
+│  └─────────────┘    └─────────────┘    └─────────────┘    └─────────────┘  │
+│                                                                              │
+│  ┌─────────────┐    ┌─────────────┐                                         │
+│  │   LAYER 5   │    │   LAYER 6   │                                         │
+│  │   Secure    │    │ Explainable │                                         │
+│  │ Integration │    │     AI      │                                         │
+│  └─────────────┘    └─────────────┘                                         │
+│                                                                              │
+└─────────────────────────────────────────────────────────────────────────────┘
+```
+
+### Layer Descriptions
+
+| Layer | Name | Functionality |
+|-------|------|---------------|
+| **Layer 1** | Patient Intake | 9-step precision intake form capturing phenotype, vitals, biomarkers, lifestyle, and socio-economic data |
+| **Layer 2** | Digital Twin Engine | Converts patient profile into computable twin with feature vectors and risk calculations |
+| **Layer 3** | Clinical Dashboard | Real-time visualization of agent consensus, treatment recommendations, and outcome trajectories |
+| **Layer 4** | Learning Loop | Continuous learning from actual patient outcomes to improve future predictions |
+| **Layer 5** | Secure Auth | JWT-based doctor authentication and secure API endpoints for EHR/wearable ingestion |
+| **Layer 6** | Explainable AI | Feature importance analysis, what-if scenarios, and transparent reasoning |
+
+---
+
+### Multi-Agent AI System
+
+BioTwin employs four specialized AI agents that collaborate using a consensus-based negotiation protocol:
+
+```
+                    ┌─────────────────────────────────┐
+                    │      PATIENT DIGITAL TWIN       │
+                    └───────────────┬─────────────────┘
+                                    │
+            ┌───────────────────────┼───────────────────────┐
+            │                       │                       │
+            ▼                       ▼                       ▼
+┌───────────────────┐   ┌───────────────────┐   ┌───────────────────┐
+│    GENETICIST     │   │  PHARMACOLOGIST   │   │  ENDOCRINOLOGIST  │
+│       Agent       │   │       Agent       │   │       Agent       │
+│                   │   │                   │   │                   │
+│ • Pharmacogenomics│   │ • Drug Interactions│   │ • Metabolic Analysis│
+│ • Variant Analysis│   │ • Dosing Optimization│  │ • Glucose Management│
+│ • Genetic Risks   │   │ • Safety Assessment│   │ • Hormonal Factors │
+└─────────┬─────────┘   └─────────┬─────────┘   └─────────┬─────────┘
+          │                       │                       │
+          └───────────────────────┼───────────────────────┘
+                                  │
+                                  ▼
+                    ┌─────────────────────────────────┐
+                    │        HERA GUARDIAN            │
+                    │   (Health Economics & Resource) │
+                    │                                 │
+                    │  • Budget Validation            │
+                    │  • Insurance Coverage           │
+                    │  • Accessibility Constraints    │
+                    │  • VETO AUTHORITY               │
+                    └─────────────────────────────────┘
+                                  │
+                                  ▼
+                    ┌─────────────────────────────────┐
+                    │      CONSENSUS PROTOCOL         │
+                    │   Final Treatment Recommendation│
+                    └─────────────────────────────────┘
+```
+
+---
+
+### Technology Stack
+
+#### Backend
+
+| Technology | Purpose |
+|------------|---------|
+| **Node.js 18+** | Runtime environment |
+| **Express 5.x** | Web framework |
+| **MongoDB 6.0** | Database (optional) |
+| **Mongoose 9.x** | ODM for MongoDB |
+| **jsonwebtoken / bcryptjs** | Secure Doctor Authentication |
+| **OpenAI / OpenRouter** | AI-powered agent analysis |
+| **WebSocket (ws)** | Real-time telemetry |
+| **PDFKit** | Report generation |
+| **Helmet** | Security middleware |
+
+#### Frontend
+
+| Technology | Purpose |
+|------------|---------|
+| **React 19** | UI framework |
+| **Next.js 16** | React Framework |
+| **App Router** | Next.js App Router |
+| **TailwindCSS 4** | Utility-first styling |
+| **Recharts** | Data visualization |
+| **Axios** | HTTP client |
+| **Lucide React** | Icon library |
+
+---
+
+## Project Structure
+
+```
+bio_twin/
+├── backend/                          # Express.js API Server
+│   ├── config/
+│   │   ├── db.js                     # Database connection logic
+│   │   └── mongo.js                  # MongoDB configuration
+│   ├── data/
+│   │   ├── mockDatabase.js           # In-memory fallback storage
+│   │   └── learningWeights.json      # ML learning weights
+│   ├── models/
+│   │   └── Patient.js                # Mongoose patient schema
+│   ├── routes/
+│   │   ├── patient.routes.js         # Patient CRUD operations
+│   │   ├── simulation.routes.js      # Treatment simulation
+│   │   ├── feedback.routes.js        # Learning feedback (Layer 4)
+│   │   ├── external.routes.js        # EHR/wearable integration
+│   │   ├── explain.routes.js         # Explainable AI (Layer 6)
+│   │   ├── pharmacology.routes.js    # Drug interactions
+│   │   ├── alerts.routes.js          # Clinical alerts
+│   │   ├── trials.routes.js          # Clinical trial matching
+│   │   └── negotiation.routes.js     # Multi-agent negotiation
+│   ├── services/
+│   │   ├── digitalTwin.service.js    # Core digital twin engine
+│   │   ├── intake.service.js         # Patient intake processing
+│   │   ├── learning.service.js       # Continuous learning
+│   │   ├── explainability.service.js # XAI features
+│   │   ├── agentNegotiation.service.js # Multi-agent consensus
+│   │   ├── agentMemory.service.js    # Agent memory/reflection
+│   │   ├── agentSwarming.service.js  # Dynamic sub-agent spawning
+│   │   └── agentTools.service.js     # Agent tool integration
+│   ├── websocket/
+│   │   └── telemetryServer.js        # Real-time WebSocket server
+│   ├── server.js                     # Main entry point
+│   ├── Dockerfile                    # Container configuration
+│   └── package.json
+│
+├── frontend/                         # Next.js Application
+│   ├── src/
+│   │   ├── api/
+│   │   │   └── apiClient.js          # Axios HTTP client
+│   │   ├── components/
+│   │   │   ├── PatientForm.jsx       # 9-step intake form
+│   │   │   ├── PatientProfilePanel.jsx
+│   │   │   ├── DigitalTwinSimulation.jsx
+│   │   │   ├── TreatmentSimulator.jsx
+│   │   │   ├── OutcomeTrajectoryChart.jsx
+│   │   │   ├── AgentCard.jsx
+│   │   │   ├── GlassBoxTerminal.jsx
+│   │   │   └── HITLInterventionPanel.jsx
+│   │   ├── pages/
+│   │   │   ├── Dashboard.jsx         # Main clinical dashboard
+│   │   │   ├── PatientDashboard.jsx
+│   │   │   └── NegotiationPage.jsx
+│   │   ├── hooks/                    # Custom React hooks
+│   │   ├── data/                     # Static data/configs
+│   │   ├── App.jsx                   # Main router/layout
+│   │   └── main.jsx                  # React entry point
+│   ├── next.config.mjs
+│   └── package.json
+│
+├── screenshots/                      # Documentation images
+├── docker-compose.yml                # Production orchestration
+├── .github/workflows/deploy.yml      # CI/CD pipeline
+└── README.md                         # This file
+```
+
+---
+
+## Quick Start
+>>>>>>> 3778f74bcd64ed2d22a6821855c819025c03908c
 
 ### Prerequisites
 - Node.js v18+
@@ -93,6 +277,7 @@ Create a `.env` file in the `/backend` directory:
 ```env
 PORT=5000
 MONGODB_URI=mongodb://localhost:27017/biotwin
+<<<<<<< HEAD
 REDIS_URL=redis://localhost:6379
 JWT_SECRET=your_super_secret_jwt_key
 OPENAI_API_KEY=sk-your-openai-key
@@ -100,6 +285,34 @@ OPENAI_API_KEY=sk-your-openai-key
 
 ### 3. Run the Platform
 Open two terminals.
+=======
+
+# Security
+JWT_SECRET=your-secure-secret-key
+
+# AI Configuration (choose one)
+OPENROUTER_API_KEY=your-openrouter-api-key
+# OR
+OPENAI_API_KEY=your-openai-api-key
+
+AI_MODEL=openai/gpt-4o-mini
+AI_TEMPERATURE=0.3
+AI_MAX_TOKENS=2000
+
+# CORS
+CORS_ORIGIN=http://localhost:3000
+```
+
+#### Frontend (`frontend/.env`)
+
+```env
+NEXT_PUBLIC_API_BASE_URL=http://localhost:5000/api
+```
+
+### Running the Application
+
+#### Development Mode
+>>>>>>> 3778f74bcd64ed2d22a6821855c819025c03908c
 
 **Terminal 1 (Backend):**
 ```bash
@@ -111,6 +324,23 @@ npm run dev
 ```bash
 cd frontend
 npm run dev
+<<<<<<< HEAD
+=======
+# App opens on http://localhost:3000
+```
+
+#### Production Mode
+
+```bash
+# Backend
+cd backend
+npm start
+
+# Frontend
+cd frontend
+npm run build
+npm run start
+>>>>>>> 3778f74bcd64ed2d22a6821855c819025c03908c
 ```
 Navigate to `http://localhost:3000` and login with the demo credentials.
 

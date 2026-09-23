@@ -1,4 +1,4 @@
-﻿const { mongoose } = require('../config/mongo');
+const { mongoose } = require('../config/mongo');
 
 // ── Negotiation Session ──────────────────────────────────────────────────────
 const NegotiationSchema = new mongoose.Schema({
@@ -17,5 +17,7 @@ const NegotiationSchema = new mongoose.Schema({
   startTime:          { type: Date },
   endTime:            { type: Date }
 }, { timestamps: true, collection: 'negotiations' });
+
+NegotiationSchema.index({ patientId: 1, createdAt: -1 });
 
 module.exports = mongoose.model('Negotiation', NegotiationSchema);

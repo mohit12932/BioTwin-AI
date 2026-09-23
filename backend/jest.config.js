@@ -1,0 +1,9 @@
+module.exports = {
+  testEnvironment: 'node',
+  setupFilesAfterEnv: ['./tests/setup.js'],
+  testMatch: ['**/tests/**/*.test.js'],
+  collectCoverage: true,
+  coverageDirectory: 'coverage',
+  verbose: true,
+  testTimeout: 30000
+};

@@ -5,7 +5,13 @@ const bcrypt = require('bcryptjs');
 const User = require('../models/User');
 const { isMongoReady } = require('../config/mongo');
 
-const JWT_SECRET = process.env.JWT_SECRET || 'fallback_secret_for_demo_purposes_only';
+let JWT_SECRET = process.env.JWT_SECRET;
+if (!JWT_SECRET) {
+  if (process.env.NODE_ENV === 'production') {
+    throw new Error('JWT_SECRET environment variable is required in production');
+  }
+  JWT_SECRET = 'fallback_secret_for_demo_purposes_only';
+}
 const JWT_EXPIRES_IN = '24h';
 
 // ── Demo account details for seeding ──────────────────────────────────────────

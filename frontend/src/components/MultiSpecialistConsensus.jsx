@@ -36,7 +36,6 @@ const SimulationStatus = ({ status, hasVeto }) => {
 const MultiSpecialistConsensus = ({
   patient = null,
   simulationResult = null,
-  // eslint-disable-next-line no-unused-vars
   drugIntel = null,
   isSimulating = false,
   onRunSimulation = () => {},

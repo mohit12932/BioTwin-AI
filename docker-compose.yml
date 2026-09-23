@@ -10,8 +10,9 @@ services:
     container_name: biotwin_backend
     restart: always
     ports:
-      - "8080:8080"
+      - "5000:5000"
     environment:
+      - PORT=5000
       - NODE_ENV=production
       - MONGO_URI=${MONGO_URI:-mongodb://mongodb_cluster:27017/biotwin}
       - JWT_SECRET=${JWT_SECRET:?JWT_SECRET environment variable is required}
@@ -42,7 +43,10 @@ services:
     container_name: biotwin_frontend
     restart: always
     ports:
-      - "80:80"
+      - "3000:3000"
+    environment:
+      - NEXT_PUBLIC_API_BASE_URL=http://localhost:5000/api
+      - NEXT_PUBLIC_WS_HOST=ws://localhost:5000
     networks:
       - healthcare_net
     depends_on:

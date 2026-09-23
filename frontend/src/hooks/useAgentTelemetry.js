@@ -24,9 +24,23 @@ export function useAgentTelemetry(sessionId, options = {}) {
 
   // Build WebSocket URL
   const getWsUrl = useCallback(() => {
-    const protocol = window.location.protocol === 'https:' ? 'wss:' : 'ws:';
-    const host = import.meta.env.VITE_WS_HOST || window.location.host.replace(':5173', ':5000');
-    return `${protocol}//${host}/ws/telemetry`;
+    const token = typeof window !== 'undefined' ? localStorage.getItem('biotwin_token') : null;
+    let wsUrl = '';
+    
+    if (process.env.NEXT_PUBLIC_WS_HOST) {
+      if (process.env.NEXT_PUBLIC_WS_HOST.startsWith('ws')) {
+        wsUrl = `${process.env.NEXT_PUBLIC_WS_HOST}/ws/telemetry`;
+      } else {
+        const protocol = window.location.protocol === 'https:' ? 'wss:' : 'ws:';
+        wsUrl = `${protocol}//${process.env.NEXT_PUBLIC_WS_HOST}/ws/telemetry`;
+      }
+    } else {
+      const protocol = window.location.protocol === 'https:' ? 'wss:' : 'ws:';
+      const host = window.location.host.replace(':3000', ':5000');
+      wsUrl = `${protocol}//${host}/ws/telemetry`;
+    }
+    
+    return `${wsUrl}${token ? `?token=${token}` : ''}`;
   }, []);
 
   // Connect to WebSocket

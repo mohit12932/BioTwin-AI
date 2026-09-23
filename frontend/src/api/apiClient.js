@@ -51,6 +51,7 @@ apiClient.interceptors.response.use(
       if (typeof window !== 'undefined' && !window.location.pathname.includes('/login')) {
         localStorage.removeItem('biotwin_token');
         localStorage.removeItem('biotwin_user');
+        // eslint-disable-next-line @next/next/no-location-assign-relative-destination
         window.location.href = '/login';
       }
       error.message = 'Authentication required.';

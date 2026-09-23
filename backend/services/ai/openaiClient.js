@@ -304,11 +304,52 @@ async function analyzeWithAgent(agentType, patient, additionalContext = {}) {
     throw new Error("AI Client is not initialized. Missing API Keys.");
   }
 
+<<<<<<< HEAD
   console.log(`[AI AGENT] Fetching real ${agentType} analysis from LLM for patient ${patient.name || patient.id}`);
   
   let contextString = "";
   if (Object.keys(additionalContext).length > 0) {
     contextString = "\nAdditional Context from other agents:\n" + JSON.stringify(additionalContext, null, 2);
+=======
+  const patientSummary = formatPatientForPrompt(patient);
+  const contextInfo = additionalContext.proposals 
+    ? `\n\nOTHER AGENT PROPOSALS TO CONSIDER:\n${JSON.stringify(additionalContext.proposals, null, 2)}`
+    : '';
+
+  const steeringInfo = additionalContext.steeringConstraints && additionalContext.steeringConstraints.length > 0
+    ? `\n\nCRITICAL CLINICIAN STEERING CONSTRAINTS (MUST OBEY):\n${additionalContext.steeringConstraints.map(c => `- ${c.constraint}`).join('\n')}`
+    : '';
+
+  try {
+    const completion = await openai.chat.completions.create({
+      model: MODEL,
+      temperature: TEMPERATURE,
+      max_tokens: MAX_TOKENS,
+      messages: [
+        {
+          role: 'system',
+          content: systemPrompt
+        },
+        {
+          role: 'user',
+          content: `Analyze this patient and provide your specialist assessment:
+
+${patientSummary}
+${contextInfo}
+${steeringInfo}
+
+Respond with valid JSON only. No markdown, no code blocks, just the JSON object.`
+        }
+      ],
+      response_format: { type: "json_object" }
+    });
+
+    const responseText = completion.choices[0].message.content;
+    return JSON.parse(responseText);
+  } catch (error) {
+    console.error(`OpenAI ${agentType} analysis error:`, error);
+    throw error;
+>>>>>>> 3778f74bcd64ed2d22a6821855c819025c03908c
   }
 
   const prompt = `${AGENT_PROMPTS[agentType]}
@@ -343,9 +384,53 @@ Ensure your response is valid JSON format.`;
  * Generate final consensus utilizing the HERA agent and other analyses deterministically
  * This bypasses Gemini/OpenRouter to provide a flawless, clinically convincing result for interviews/demos
  */
+<<<<<<< HEAD
 async function generateConsensusRecommendation(patient, agentAnalyses) {
   if (!openai && !genAI) {
     throw new Error("AI Client is not initialized. Missing API Keys.");
+=======
+async function generateConsensusRecommendation(patient, agentAnalyses, steeringConstraints = []) {
+  const systemPrompt = `You are the BioTwin Consensus Engine. Your job is to synthesize analyses from multiple specialist AI agents into a single, coherent treatment recommendation.
+
+You have received analyses from:
+1. Geneticist (Dr. Gene) - Genomic and pharmacogenomic insights
+2. Pharmacologist (Dr. Pharma) - Drug safety and interactions
+3. Endocrinologist (Dr. Endo) - Metabolic considerations
+4. HERA Guardian - Economic and access feasibility
+
+SYNTHESIS GUIDELINES:
+1. Identify areas of agreement between agents
+2. Resolve conflicts by prioritizing safety > efficacy > cost
+3. Incorporate HERA constraints - if HERA vetoed, you MUST adjust
+4. Create a practical, implementable treatment plan
+5. The recommendation must be SPECIFIC to this patient's conditions and medications
+
+OUTPUT FORMAT (JSON):
+{
+  "recommendedProtocol": "Specific treatment protocol title (include actual drug names and doses)",
+  "protocolDetails": "2-3 sentence description of the recommendation",
+  "rationale": "Why this is the best approach for this specific patient",
+  "medications": [
+    {
+      "name": "Drug name",
+      "dose": "Specific dose",
+      "frequency": "How often",
+      "duration": "How long",
+      "notes": "Any special instructions"
+    }
+  ],
+  "monitoring": ["Required monitoring items"],
+  "precautions": ["Safety precautions based on patient profile"],
+  "adjustedForConstraints": true|false,
+  "adjustmentReason": "If adjusted, why (budget, access, safety)",
+  "confidence": 0.0-1.0,
+  "consensusLevel": "Full|Majority|Adjusted",
+  "agentAgreement": {
+    "geneticist": "agreed|adjusted|dissented",
+    "pharmacologist": "agreed|adjusted|dissented",
+    "endocrinologist": "agreed|adjusted|dissented",
+    "hera": "approved|vetoed_then_adjusted"
+>>>>>>> 3778f74bcd64ed2d22a6821855c819025c03908c
   }
   
   console.log(`[AI CONSENSUS] Generating real AI consensus for patient ${patient.name || patient.id}`);
@@ -379,6 +464,7 @@ OUTPUT FORMAT (JSON ONLY):
 
 CRITICAL INSTRUCTION: Even if patient lab values or vitals are missing, you MUST still propose a provisional, safe medication regimen based on their known medical history and the agents' analysis. Do not simply recommend a "diagnostic protocol." You must populate the "medications" array with at least one specific therapeutic drug, dose, and frequency for demonstration purposes.
 
+<<<<<<< HEAD
 Do not include markdown blocks, just raw JSON.`;
 
   return executeWithRetry(async () => {
@@ -400,6 +486,29 @@ Do not include markdown blocks, just raw JSON.`;
     }
   });
 }
+=======
+  const patientSummary = formatPatientForPrompt(patient);
+  
+  const steeringInfo = steeringConstraints && steeringConstraints.length > 0
+    ? `\n\nCRITICAL CLINICIAN STEERING CONSTRAINTS (MUST OBEY):\n${steeringConstraints.map(c => `- ${c.constraint}`).join('\n')}`
+    : '';
+
+  try {
+    const completion = await openai.chat.completions.create({
+      model: MODEL,
+      temperature: TEMPERATURE,
+      max_tokens: MAX_TOKENS,
+      messages: [
+        {
+          role: 'system',
+          content: systemPrompt
+        },
+        {
+          role: 'user',
+          content: `PATIENT DATA:
+${patientSummary}
+${steeringInfo}
+>>>>>>> 3778f74bcd64ed2d22a6821855c819025c03908c
 
 /**
  * Extract structured JSON from multiple medical document images using Gemini Multimodal

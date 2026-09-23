@@ -21,6 +21,7 @@ const DoctorDashboard = () => {
     }
 
     if (userData) {
+      // eslint-disable-next-line react-hooks/set-state-in-effect
       setUser(JSON.parse(userData));
     }
 
@@ -67,9 +68,7 @@ const DoctorDashboard = () => {
       <header className="sticky top-0 z-10 border-b border-black/5 bg-white/80 px-6 py-4 backdrop-blur-md">
         <div className="mx-auto flex max-w-6xl items-center justify-between">
           <div className="flex items-center gap-3">
-            <div className="rounded-xl bg-lime-100 p-2 text-lime-700">
-              <Activity className="h-6 w-6" />
-            </div>
+            <img src="/logo.jpg" alt="BioTwin Logo" className="h-10 w-10 rounded-xl object-contain bg-white shadow-sm" />
             <div>
               <h1 className="text-xl font-bold tracking-tight text-slate-900">BioTwin Clinical Home</h1>
               <p className="text-xs text-slate-500">Secure Doctor Access</p>

@@ -8,6 +8,17 @@
 const WebSocket = require('ws');
 const { negotiationEventBus } = require('../services/agentNegotiation.service');
 
+const url = require('url');
+const jwt = require('jsonwebtoken');
+
+let JWT_SECRET = process.env.JWT_SECRET;
+if (!JWT_SECRET) {
+  if (process.env.NODE_ENV === 'production') {
+    throw new Error('JWT_SECRET environment variable is required in production');
+  }
+  JWT_SECRET = 'fallback_secret_for_demo_purposes_only';
+}
+
 let wss = null;
 const clientSessions = new Map(); // Map<WebSocket, Set<sessionId>>
 
@@ -23,6 +34,23 @@ function initializeWebSocket(server) {
   console.log('[WebSocket] Telemetry server initialized on /ws/telemetry');
 
   wss.on('connection', (ws, req) => {
+    const parameters = url.parse(req.url, true);
+    const token = parameters.query.token;
+
+    if (!token) {
+      console.log('[WebSocket] Connection rejected: No token provided');
+      ws.close(4001, 'Unauthorized');
+      return;
+    }
+
+    try {
+      jwt.verify(token, JWT_SECRET);
+    } catch (err) {
+      console.log('[WebSocket] Connection rejected: Invalid token');
+      ws.close(4001, 'Unauthorized');
+      return;
+    }
+
     const clientId = Date.now().toString(36) + Math.random().toString(36).substr(2);
     console.log(`[WebSocket] Client connected: ${clientId}`);
     

@@ -90,11 +90,7 @@ const corsOptions = {
     if (allowedOrigins.includes(origin)) {
       return callback(null, true);
     }
-    
-    // Allow any Vercel preview deployment
-    if (origin.endsWith('.vercel.app')) {
-      return callback(null, true);
-    }
+    // Dynamic bypasses removed for security
     
     // In development, allow all
     if (process.env.NODE_ENV !== 'production') {
@@ -132,7 +128,8 @@ app.use((req, res, next) => {
 
 // Routes
 const authRoutes = require('./routes/auth.routes');
-const authMiddleware = require('./middleware/auth.middleware');
+const authMiddleware = require('./middleware/auth.middleware').authMiddleware;
+const auditMiddleware = require('./middleware/audit.middleware');
 const patientRoutes = require('./routes/patient.routes');
 const negotiationRoutes = require('./routes/negotiation.routes');
 const intakeRoutes = require('./routes/intake.routes');
@@ -163,8 +160,9 @@ app.get('/api/health', (req, res) => {
   });
 });
 
-// Protect all following routes with Doctor Authorization
+// Protect all following routes with authentication
 app.use('/api', authMiddleware);
+app.use('/api', auditMiddleware);
 
 app.use('/api/patient', patientRoutes);
 app.use('/api/negotiate', negotiationRoutes); // Multi-round agent negotiation protocol

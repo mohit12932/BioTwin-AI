@@ -12,6 +12,7 @@ const router = express.Router();
 const { v4: uuidv4 } = require('uuid');
 
 const negotiationService = require('../services/agentNegotiation.service');
+<<<<<<< HEAD
 const Patient = require('../models/Patient');
 
 async function getPatientById(id) {
@@ -20,6 +21,9 @@ async function getPatientById(id) {
   }
   return await Patient.findOne({ patientId: id }).lean();
 }
+=======
+const { getPatientById } = require('../services/explainability.service');
+>>>>>>> 3778f74bcd64ed2d22a6821855c819025c03908c
 const Negotiation = require('../models/Negotiation');
 const { isMongoReady } = require('../config/mongo');
 

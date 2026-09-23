@@ -1,6 +1,12 @@
 const jwt = require('jsonwebtoken');
 
-const JWT_SECRET = process.env.JWT_SECRET || 'fallback_secret_for_demo_purposes_only';
+let JWT_SECRET = process.env.JWT_SECRET;
+if (!JWT_SECRET) {
+  if (process.env.NODE_ENV === 'production') {
+    throw new Error('JWT_SECRET environment variable is required in production');
+  }
+  JWT_SECRET = 'fallback_secret_for_demo_purposes_only';
+}
 
 const authMiddleware = (req, res, next) => {
   // Get token from header
@@ -20,16 +26,37 @@ const authMiddleware = (req, res, next) => {
   try {
     const decoded = jwt.verify(token, JWT_SECRET);
     req.user = decoded.user;
-    
-    // In this app, only doctors and admins can access the backend
-    if (req.user.role !== 'doctor' && req.user.role !== 'admin') {
-       return res.status(403).json({ error: 'Access denied: Requires Doctor role' });
-    }
-    
     next();
   } catch (err) {
     res.status(401).json({ error: 'Token is not valid' });
   }
 };
 
-module.exports = authMiddleware;
+const authorize = (...roles) => {
+  return (req, res, next) => {
+    if (!req.user || !roles.includes(req.user.role)) {
+      return res.status(403).json({ error: `Access denied: Requires one of roles: ${roles.join(', ')}` });
+    }
+    next();
+  }
+};
+
+const authorizePatientResource = (req, res, next) => {
+  if (req.user.role === 'admin' || req.user.role === 'doctor') {
+    return next();
+  }
+  
+  if (req.user.role === 'patient') {
+    // Determine the requested patient ID
+    // Check route param or body
+    const patientId = req.params.id || req.body.patientId;
+    if (patientId && req.user.id !== patientId) {
+      return res.status(403).json({ error: 'Access denied: You can only access your own data' });
+    }
+    return next();
+  }
+  
+  return res.status(403).json({ error: 'Access denied' });
+};
+
+module.exports = { authMiddleware, authorize, authorizePatientResource };
