@@ -6,10 +6,7 @@
   "scripts": {
     "start": "node server.js",
     "dev": "nodemon server.js",
-<<<<<<< HEAD
     "build:native": "node-gyp configure && node-gyp build",
-=======
->>>>>>> 3778f74bcd64ed2d22a6821855c819025c03908c
     "test": "jest"
   },
   "keywords": [],

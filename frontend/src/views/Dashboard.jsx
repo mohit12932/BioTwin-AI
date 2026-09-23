@@ -503,24 +503,8 @@ const Dashboard = ({ role = 'doctor', providedId, providedSection }) => {
     }]);
     
     try {
-<<<<<<< HEAD
       if (wsRef.current) {
         wsRef.current.close();
-=======
-      // Extract constraints from clinician steering messages before starting
-      const preConstraints = deliberationMessages
-        .filter(msg => msg.agent === 'clinician' && msg.type === 'steering_intervention')
-        .map(msg => msg.constraint);
-
-      // Call the real backend API for AI-powered agent negotiation
-      const response = await startNegotiationSync(id, { 
-        treatmentContext: { constraints: preConstraints } 
-      });
-      
-      // Store session ID for HITL steering interventions
-      if (response.session?.sessionId) {
-        setNegotiationSessionId(response.session.sessionId);
->>>>>>> 3778f74bcd64ed2d22a6821855c819025c03908c
       }
 
       const wsUrl = getTelemetryWebSocketUrl() + '/ws/telemetry';
@@ -683,8 +667,6 @@ const Dashboard = ({ role = 'doctor', providedId, providedSection }) => {
   }, [id, formatTimestamp]);
   
   // Fallback demo deliberation (when backend unavailable)
-<<<<<<< HEAD
-=======
   const runDemoDeliberation = useCallback(() => {
     DEMO_RESPONSES.forEach((resp, i) => {
       setTimeout(() => {
@@ -739,50 +721,9 @@ const Dashboard = ({ role = 'doctor', providedId, providedSection }) => {
     router.push(`/dashboard/${id}/${key}`);
   };
 
-  // Generate agent insights based on patient data
-  const agentInsights = useMemo(() => {
-    return generateAgentInsights(patient, drugIntel, result);
-  }, [patient, drugIntel, result]);
 
-  // Load dashboard data
-  useEffect(() => {
-    const loadDashboard = async () => {
-      setLoading(true);
-      setError('');
-      try {
-        const [patientRes, predictionRes, explainRes] = await Promise.allSettled([
-          apiClient.get(`/patient/${id}`),
-          apiClient.get(`/predict/${id}`),
-          apiClient.post('/explain/insights', { patientId: id }),
-        ]);
-
-        if (patientRes.status !== 'fulfilled') throw patientRes.reason;
-
-        const patientData = patientRes.value.data;
-        setPatient(patientData);
-        if (predictionRes.status === 'fulfilled') setPrediction(predictionRes.value.data);
-        if (explainRes.status === 'fulfilled') setExplainability(explainRes.value.data);
-
-        const [cohortRes, drugRes] = await Promise.allSettled([
-          apiClient.post('/explain/cohort-match', { patientId: id, treatmentPlan }),
-          apiClient.post('/explain/drug-intelligence', { patientId: id }),
-        ]);
-
-        if (cohortRes.status === 'fulfilled') setCohortData(cohortRes.value.data);
-        if (drugRes.status === 'fulfilled') setDrugIntel(drugRes.value.data);
-      } catch (loadError) {
-        console.error(loadError);
-        setError('Unable to load the digital twin dashboard.');
-      } finally {
-        setLoading(false);
-      }
-    };
-
-    loadDashboard();
-  }, [id, treatmentPlan]);
 
   // Reserved for manual simulation trigger (currently uses consensus deliberation instead)
->>>>>>> 3778f74bcd64ed2d22a6821855c819025c03908c
   const _runSimulation = async () => {
     setSimulating(true);
     setConsensusStatus('running');
@@ -1149,97 +1090,8 @@ const Dashboard = ({ role = 'doctor', providedId, providedSection }) => {
                     <span className="text-[12px] text-slate-600 font-medium">Confidence: <strong className="text-emerald-500">{result.recommendation?.confidence || 85}%</strong></span>
                     <span className="text-[12px] text-slate-600 font-medium">Rounds: <strong className="text-slate-700">1</strong></span>
                   </div>
-<<<<<<< HEAD
                   <button className="bg-slate-900 text-white px-5 py-2.5 rounded-lg text-[12px] font-bold tracking-wide hover:bg-slate-800 transition-all flex items-center gap-1.5 shadow-md shadow-slate-900/20 active:scale-95">
                     Apply to Treatment Plan <ArrowRight className="w-3.5 h-3.5" />
-=======
-                  <div>
-                    <h2 className="text-lg font-bold text-slate-900">Live Agent Deliberation</h2>
-                    <p className="text-sm text-slate-500">Watch AI specialists collaborate in real-time</p>
-                  </div>
-                </div>
-                <div className="flex items-center gap-2">
-                  {consensusStatus === 'running' && (
-                    <div className="flex items-center gap-1.5 px-3 py-1.5 bg-blue-100 rounded-full">
-                      <div className="w-2 h-2 rounded-full bg-blue-500 animate-pulse" />
-                      <span className="text-xs font-medium text-blue-700">Live</span>
-                    </div>
-                  )}
-                  {consensusStatus === 'consensus' && (
-                    <button
-                      onClick={resetConsensus}
-                      className="flex items-center gap-1.5 px-3 py-1.5 text-xs font-medium text-slate-600 bg-slate-100 rounded-lg hover:bg-slate-200"
-                    >
-                      <RotateCcw className="w-3.5 h-3.5" />
-                      Run Again
-                    </button>
-                  )}
-                  {consensusStatus === 'idle' && (
-                    <button
-                      onClick={runConsensusDeliberation}
-                      className="flex items-center gap-2 px-5 py-2 rounded-lg font-medium text-sm bg-gradient-to-r from-emerald-500 to-teal-500 hover:from-emerald-600 hover:to-teal-600 text-white shadow-sm transition-all"
-                    >
-                      <Play className="w-4 h-4" />
-                      Start Consensus
-                    </button>
-                  )}
-                </div>
-              </div>
-
-              {/* Feed Container */}
-              <div
-                ref={feedRef}
-                className="h-[420px] overflow-y-auto rounded-xl border border-slate-200 bg-slate-50 p-4 space-y-3"
-              >
-                {deliberationMessages.length === 0 ? (
-                  <div className="h-full flex flex-col items-center justify-center text-center py-12">
-                    <div className="w-16 h-16 rounded-full bg-slate-100 flex items-center justify-center mb-4">
-                      <FileCheck className="w-8 h-8 text-slate-300" />
-                    </div>
-                    <h4 className="text-sm font-medium text-slate-600 mb-1">
-                      {consensusStatus === 'idle' ? 'Ready to Start' : 'Connecting to Agents...'}
-                    </h4>
-                    <p className="text-xs text-slate-400 max-w-[240px]">
-                      Click &quot;Start Consensus&quot; to begin multi-agent deliberation and generate treatment recommendation
-                    </p>
-                  </div>
-                ) : (
-                  deliberationMessages.map((msg, i) => (
-                    <React.Fragment key={msg.id ?? `msg-${i}`}>
-                      {renderMessage(msg, i)}
-                    </React.Fragment>
-                  ))
-                )}
-              </div>
-
-              {/* FEATURE 1: HITL Steering Command Line */}
-              <div className={`mt-3 border-t pt-3 transition-all duration-200 ${
-                isSteeringActive ? 'bg-amber-50 border-amber-200 -mx-6 -mb-6 px-6 pb-4 rounded-b-[28px]' : 'border-slate-100'
-              }`}>
-                <form onSubmit={handleSteeringSubmit} className="flex items-center gap-2">
-                  <span className="text-amber-500 font-mono text-sm font-bold">&gt;</span>
-                  <input
-                    type="text"
-                    value={steeringInput}
-                    onChange={(e) => setSteeringInput(e.target.value)}
-                    onFocus={() => setIsSteeringActive(true)}
-                    onBlur={() => !steeringInput && setIsSteeringActive(false)}
-                    placeholder={consensusStatus === 'running' ? "Inject constraint... (e.g., 'Patient had GI issues with Metformin')" : "Inject constraint before/after simulation..."}
-                    className={`flex-1 bg-transparent text-sm font-mono outline-none placeholder:text-slate-400 disabled:opacity-50 ${
-                      isSteeringActive ? 'text-amber-800' : 'text-slate-600'
-                    }`}
-                  />
-                  <button
-                    type="submit"
-                    disabled={consensusStatus !== 'running' || !steeringInput.trim()}
-                    className={`px-3 py-1.5 rounded-lg text-xs font-semibold transition-colors ${
-                      steeringInput.trim() && consensusStatus === 'running'
-                        ? 'bg-amber-500 text-white hover:bg-amber-600'
-                        : 'bg-slate-200 text-slate-400 cursor-not-allowed'
-                    }`}
-                  >
-                    Inject
->>>>>>> 3778f74bcd64ed2d22a6821855c819025c03908c
                   </button>
                 </div>
               </div>
@@ -1464,7 +1316,6 @@ const Dashboard = ({ role = 'doctor', providedId, providedSection }) => {
   // =============================================================================
 
   return (
-<<<<<<< HEAD
     <div className="h-screen w-full bg-[linear-gradient(180deg,#e8f5e9_0%,#c8e6c9_100%)] p-3 md:p-5 flex flex-col font-sans overflow-hidden">
       
       {/* Top Navigation Bar (restored style) */}
@@ -1474,137 +1325,6 @@ const Dashboard = ({ role = 'doctor', providedId, providedSection }) => {
           <div>
             <p className="font-bold text-slate-800 leading-tight text-sm">BioTwin AI</p>
             <p className="text-[9px] uppercase tracking-widest text-emerald-700 font-bold leading-tight">Clinical Copilot</p>
-=======
-    <div className="min-h-screen bg-[linear-gradient(180deg,#e8f5e9_0%,#c8e6c9_100%)] p-4 text-slate-900 md:p-6">
-      <div className="mx-auto flex max-w-[1600px] gap-4 rounded-[38px] border border-white/60 bg-[#f5f5f0]/90 p-4 shadow-[0_24px_80px_rgba(80,110,88,0.12)] md:p-6">
-        {/* NEW SIDEBAR */}
-        <div className="hidden w-[220px] shrink-0 flex-col rounded-[28px] bg-white/70 p-4 md:flex">
-          {/* Logo */}
-          <div className="mb-5 flex items-center gap-3 rounded-[22px] bg-emerald-100 px-4 py-4">
-            <img src="/logo.jpg" alt="BioTwin Logo" className="h-8 w-8 rounded-lg object-contain bg-white" />
-            <div>
-              <p className="text-xs uppercase tracking-[0.15em] text-emerald-700">BioTwin AI</p>
-              <p className="font-semibold text-sm">Digital Twin</p>
-            </div>
-          </div>
-
-          {/* Navigation */}
-          <div className="space-y-1 flex-1">
-            {sections.map((item) => {
-              if (item.divider) {
-                return (
-                  <div key={item.key} className="px-2 py-2 mt-4 mb-1">
-                    <p className="text-xs font-semibold uppercase tracking-wider text-slate-400">{item.label}</p>
-                  </div>
-                );
-              }
-
-              const Icon = item.icon;
-              const active = item.key === activeSection;
-              const isAgent = item.group === 'agents';
-
-              return (
-                <button
-                  key={item.key}
-                  onClick={() => openSection(item.key)}
-                  className={`flex w-full items-center gap-3 rounded-xl px-3 py-2.5 text-left transition ${
-                    active
-                      ? 'bg-emerald-600 text-white'
-                      : 'bg-transparent text-slate-600 hover:bg-emerald-50'
-                  }`}
-                >
-                  <span
-                    className={`flex h-8 w-8 items-center justify-center rounded-lg ${
-                      active ? 'bg-emerald-500' : isAgent ? '' : 'bg-slate-100'
-                    }`}
-                    style={
-                      isAgent && !active
-                        ? { backgroundColor: item.color + '20' }
-                        : undefined
-                    }
-                  >
-                    <Icon
-                      className={`h-4 w-4 ${active ? 'text-white' : 'text-slate-500'}`}
-                      style={isAgent && !active ? { color: item.color } : undefined}
-                    />
-                  </span>
-                  <span className="font-medium text-sm">{item.label}</span>
-                </button>
-              );
-            })}
-          </div>
-
-          {/* Footer */}
-          <div className="pt-4 space-y-2">
-            <button
-              onClick={() => router.push('/doctor')}
-              className="flex w-full items-center gap-3 rounded-xl bg-slate-100 px-3 py-2.5 text-slate-600 hover:bg-white text-sm"
-            >
-              <Home className="h-4 w-4" /> Back Home
-            </button>
-          </div>
-        </div>
-
-        {/* MAIN CONTENT */}
-        <div className="min-w-0 flex-1 space-y-5">
-          {/* Header */}
-          <div className="flex flex-col gap-4 xl:flex-row xl:items-center xl:justify-between">
-            <div>
-              <div className={`mb-2 inline-flex items-center gap-2 rounded-full ${currentTheme.accentBg} px-3 py-1 text-xs font-bold uppercase tracking-[0.15em] ${currentTheme.accentText}`}>
-                <Sparkles className="h-3.5 w-3.5" /> {currentTheme.layer}
-              </div>
-              <h1 className="text-3xl font-bold tracking-tight md:text-4xl text-slate-900">
-                {sections.find((item) => item.key === activeSection)?.label || 'Consensus Overview'}
-              </h1>
-              <p className="mt-2 max-w-2xl text-sm text-slate-600">{currentTheme.description}</p>
-            </div>
-            <div className="flex flex-col gap-3 md:flex-row md:items-center">
-              <div className="inline-flex items-center gap-2 rounded-full bg-emerald-600 px-4 py-2.5 text-sm font-semibold text-white">
-                <User className="h-4 w-4" /> {role}
-              </div>
-              {canExport && (
-                <button
-                  onClick={exportClinicianReport}
-                  disabled={exportingReport}
-                  className="inline-flex items-center gap-2 rounded-full bg-white px-4 py-2.5 text-sm font-semibold text-slate-900 shadow-sm disabled:opacity-60"
-                >
-                  <Download className="h-4 w-4" /> {exportingReport ? 'Exporting...' : 'Export'}
-                </button>
-              )}
-            </div>
-          </div>
-
-          {/* Mobile Navigation */}
-          <div className="flex gap-2 overflow-auto pb-1 md:hidden">
-            {sections
-              .filter((s) => !s.divider)
-              .map((item) => (
-                <button
-                  key={item.key}
-                  onClick={() => openSection(item.key)}
-                  className={`whitespace-nowrap rounded-full px-4 py-2 text-sm font-semibold ${
-                    item.key === activeSection
-                      ? 'bg-emerald-600 text-white'
-                      : 'bg-white text-slate-600'
-                  }`}
-                >
-                  {item.label}
-                </button>
-              ))}
-          </div>
-
-          {error && (
-            <div className="rounded-2xl border border-rose-200 bg-rose-50 px-4 py-3 text-sm text-rose-700">
-              {error}
-            </div>
-          )}
-
-          {/* Main Content Area */}
-          <div className={`rounded-[32px] bg-white/40 p-4 shadow-[inset_0_1px_0_rgba(255,255,255,0.7)]`}>
-            <div key={activeSection} className="animate-[fadeSlide_280ms_ease]">
-              {renderSection()}
-            </div>
->>>>>>> 3778f74bcd64ed2d22a6821855c819025c03908c
           </div>
         </div>
         

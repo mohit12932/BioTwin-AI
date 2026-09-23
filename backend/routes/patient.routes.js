@@ -20,38 +20,7 @@ router.post('/parse-lab', authorize('doctor', 'admin'), (req, res) => {
   }
 });
 
-<<<<<<< HEAD
 
-=======
-router.get('/demo-cases', authorize('doctor', 'admin'), (req, res) => {
-  res.json(intakeService.getDemoCases().map(({ slug, title, disease }) => ({ slug, title, disease })));
-});
-
-router.post('/demo-seed/:slug', authorize('doctor', 'admin'), async (req, res) => {
-  const demo = intakeService.getDemoCases().find((item) => item.slug === req.params.slug);
-  if (!demo) return res.status(404).json({ error: 'Demo case not found' });
-
-  try {
-    const structuredProfile = intakeService.processIntake(demo.payload);
-    const newPatient = { id: structuredProfile.patientId, ...structuredProfile };
-    try {
-      await Patient.create(newPatient);
-    } catch (dbErr) {
-      console.warn('MongoDB save failed for demo case:', dbErr.message);
-      return res.status(500).json({ error: 'Database error' });
-    }
-
-    res.status(201).json({
-      patientId: newPatient.patientId,
-      demo: { slug: demo.slug, title: demo.title, disease: demo.disease },
-      message: 'Demo patient seeded successfully',
-    });
-  } catch (error) {
-    console.error('Demo seed error:', error);
-    res.status(500).json({ error: 'Failed to seed demo patient.' });
-  }
-});
->>>>>>> 3778f74bcd64ed2d22a6821855c819025c03908c
 
 // Add new Intake Endpoint
 router.post('/intake', authorize('doctor', 'admin'), async (req, res) => {
@@ -73,16 +42,8 @@ router.post('/intake', authorize('doctor', 'admin'), async (req, res) => {
     };
     
     // Save to MongoDB
-<<<<<<< HEAD
     if (!isMongoReady()) {
       return res.status(503).json({ error: 'MongoDB is required but not connected.' });
-=======
-    try {
-      await Patient.create(newPatient);
-    } catch (dbErr) {
-      console.error("MongoDB save failed:", dbErr.message);
-      return res.status(500).json({ error: 'Database error' });
->>>>>>> 3778f74bcd64ed2d22a6821855c819025c03908c
     }
     
     await Patient.create(newPatient);
@@ -132,22 +93,10 @@ router.post('/', authorize('doctor', 'admin'), async (req, res) => {
     createdAt: new Date()
   };
 
-<<<<<<< HEAD
   if (!isMongoReady()) {
     return res.status(503).json({ error: 'MongoDB is required but not connected.' });
   }
 
-=======
->>>>>>> 3778f74bcd64ed2d22a6821855c819025c03908c
-  try {
-    await Patient.create(newPatient);
-    console.log(`Patient saved to MongoDB: ${newPatient.patientId}`);
-  } catch(e) {
-<<<<<<< HEAD
-    console.warn('MongoDB save failed for patient:', e.message);
-=======
-    console.error('MongoDB save failed for patient:', e.message);
->>>>>>> 3778f74bcd64ed2d22a6821855c819025c03908c
     return res.status(500).json({ error: 'Database error' });
   }
   
@@ -163,7 +112,6 @@ router.get('/:id', authorizePatientResource, async (req, res) => {
 
   let patient;
   try {
-<<<<<<< HEAD
      if (!isMongoReady()) {
         return res.status(503).json({ error: 'MongoDB is required but not connected.' });
      }
@@ -173,13 +121,6 @@ router.get('/:id', authorizePatientResource, async (req, res) => {
   } catch(e) {
     console.warn('MongoDB query failed for patient lookup:', e.message);
     return res.status(500).json({ error: 'Database error' });
-=======
-    const queryPatient = await Patient.findOne({ patientId: req.params.id });
-    if (queryPatient) patient = queryPatient;
-    if (!patient) patient = await Patient.findOne({ id: req.params.id });
-  } catch(e) {
-    console.warn('MongoDB query failed for patient lookup:', e.message);
->>>>>>> 3778f74bcd64ed2d22a6821855c819025c03908c
   }
   
   if (!patient) return res.status(404).json({ error: "Patient not found" });
@@ -189,14 +130,10 @@ router.get('/:id', authorizePatientResource, async (req, res) => {
 router.get('/', authorize('doctor', 'admin'), async (req, res) => {
   let patients = [];
   try {
-<<<<<<< HEAD
      if (!isMongoReady()) {
         return res.status(503).json({ error: 'MongoDB is required but not connected.' });
      }
      patients = await Patient.find({});
-=======
-    patients = await Patient.find({});
->>>>>>> 3778f74bcd64ed2d22a6821855c819025c03908c
   } catch(e) {
     console.warn('MongoDB query failed for patient list:', e.message);
     return res.status(500).json({ error: 'Database error' });
