@@ -31,6 +31,56 @@ Instead of relying on a single, hallucination-prone LLM, BioTwin utilizes an adv
 
 BioTwin is engineered for absolute deterministic safety combined with generative flexibility. 
 
+```mermaid
+flowchart TB
+    classDef ui fill:#000,stroke:#fff,color:#fff,rx:8px
+    classDef node fill:#339933,stroke:#fff,color:#fff,rx:8px
+    classDef cpp fill:#00599C,stroke:#fff,color:#fff,rx:8px
+    classDef db fill:#47A248,stroke:#fff,color:#fff,rx:8px
+    classDef cache fill:#DC382D,stroke:#fff,color:#fff,rx:8px
+    classDef ai fill:#00A67E,stroke:#fff,color:#fff,rx:8px
+
+    subgraph "Frontend Layer (Next.js & React)"
+        Dashboard["🏥 Physician Dashboard\n(React / TailwindCSS)"]:::ui
+        Telemetry["📡 Live Telemetry Viewer\n(WebSockets)"]:::ui
+    end
+
+    subgraph "Backend Layer (Node.js & Express)"
+        API["🔌 API Gateway & Auth"]:::node
+        WS["⚡ WebSocket Server"]:::node
+        Orchestrator["🧠 Multi-Agent Orchestrator\n(Parallel Agent Spawning)"]:::node
+    end
+
+    subgraph "Data Storage"
+        MongoDB[("🍃 MongoDB\n(Patient Phenotypes)")]:::db
+        Redis[("⚡ Redis\n(Drug Intel Caching)")]:::cache
+    end
+
+    subgraph "AI Deliberation Layer"
+        LLM["🤖 OpenAI GPT-4 / Gemini\n(Cardiologist, Nephrologist, etc.)"]:::ai
+    end
+
+    subgraph "Deterministic Safety Layer"
+        HERA["🛡️ HERA Engine\n(C++ Constraint Graph)"]:::cpp
+    end
+
+    %% Client to Server Links
+    Dashboard <-->|REST API| API
+    Telemetry <-->|Live Data Stream| WS
+
+    %% Internal Server Links
+    API --> Orchestrator
+    Orchestrator -->|Push Updates| WS
+    API <--> MongoDB
+    Orchestrator <--> Redis
+
+    %% Orchestrator to AI
+    Orchestrator <-->|Clinical Debate| LLM
+
+    %% Orchestrator to Safety Engine
+    Orchestrator <-->|O(1) Veto / Validation via node-addon-api| HERA
+```
+
 ### 1. Multi-Agent Orchestration (Node.js & OpenAI)
 - **Parallel Deliberation:** The backend dynamically spawns distinct LLM personas (e.g., Cardiologist, Nephrologist). 
 - **Context Isolation:** Each agent only receives the biomarkers and history relevant to their specialty, preventing context bloat and hallucination.
