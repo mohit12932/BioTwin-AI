@@ -48,7 +48,7 @@ if (useOpenRouter) {
 // Model selection
 let defaultModel = 'gpt-4o-mini';
 if (useOpenRouter) defaultModel = 'google/gemini-1.5-flash';
-else if (useGemini) defaultModel = 'gemini-3.5-flash-lite';
+else if (useGemini) defaultModel = 'gemini-1.5-flash';
 
 const MODEL = process.env.AI_MODEL || process.env.OPENAI_MODEL || defaultModel;
 const TEMPERATURE = parseFloat(process.env.AI_TEMPERATURE || process.env.OPENAI_TEMPERATURE) || 0.3;
