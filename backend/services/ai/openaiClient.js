@@ -12,6 +12,7 @@
 
 const OpenAI = require('openai');
 const { GoogleGenerativeAI } = require("@google/generative-ai");
+const { retrieveGuidelines } = require('./rag.service');
 
 // Determine which API to use (Gemini, OpenRouter, or direct OpenAI)
 const useGemini = !!process.env.GEMINI_API_KEY;
@@ -311,11 +312,30 @@ async function analyzeWithAgent(agentType, patient, additionalContext = {}) {
     contextString = "\nAdditional Context from other agents:\n" + JSON.stringify(additionalContext, null, 2);
   }
 
+  let ragContextText = "";
+  // Retrieve RAG guidelines for clinical specialist agents
+  if (['nephrologist', 'cardiologist', 'endocrinologist'].includes(agentType)) {
+    try {
+      const query = `${patient.disease || 'medical condition'} ${patient.biomarkers?.join(' ') || ''}`;
+      console.log(`[RAG] Searching MongoDB Vector Database for ${agentType}...`);
+      const guidelines = await retrieveGuidelines(query, agentType, 2);
+      
+      if (guidelines && guidelines.length > 0) {
+        ragContextText = "\n\n[VERIFIED CLINICAL GUIDELINES (RAG)]\n" + 
+          guidelines.map(g => `Source: ${g.source}\nTitle: ${g.title}\nGuideline: ${g.content}`).join("\n\n") + 
+          "\n\nCRITICAL: You MUST ensure your recommendations comply with the above verified guidelines.";
+      }
+    } catch (err) {
+      console.warn(`[RAG] Vector retrieval failed for ${agentType}:`, err.message);
+    }
+  }
+
   const prompt = `${AGENT_PROMPTS[agentType]}
 
 Patient Data:
 ${formatPatientForPrompt(patient)}
 ${contextString}
+${ragContextText}
 
 Ensure your response is valid JSON format.`;
 

@@ -183,6 +183,13 @@ async function nephrologistAnalyze(session) {
     message: `Analyzing renal function and AKI risk...`
   });
   
+  emitTelemetry(session.id, {
+    type: 'tool_use',
+    agent: agent.id,
+    color: agent.color,
+    message: `Searching MongoDB Vector DB for Nephrology clinical guidelines...`
+  });
+  
   try {
     const analysis = await retryAICall(
       () => openaiClient.analyzeWithAgent('nephrologist', patient),
@@ -241,6 +248,13 @@ async function cardiologistAnalyze(session) {
     message: `Initiating cardiovascular assessment...`
   });
   
+  emitTelemetry(session.id, {
+    type: 'tool_use',
+    agent: agent.id,
+    color: agent.color,
+    message: `Searching MongoDB Vector DB for Cardiology clinical guidelines...`
+  });
+  
   try {
     const analysis = await retryAICall(
       () => openaiClient.analyzeWithAgent('cardiologist', patient, {
@@ -297,6 +311,13 @@ async function endocrinologistAnalyze(session) {
     specialty: agent.specialty,
     color: agent.color,
     message: `Evaluating metabolic profile...`
+  });
+  
+  emitTelemetry(session.id, {
+    type: 'tool_use',
+    agent: agent.id,
+    color: agent.color,
+    message: `Searching MongoDB Vector DB for Endocrinology clinical guidelines...`
   });
   
   try {

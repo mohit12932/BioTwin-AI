@@ -277,10 +277,6 @@ const Dashboard = ({ role = 'doctor', providedId, providedSection }) => {
   const [realAgentAnalyses, setRealAgentAnalyses] = useState(null);
 
   const [patient, setPatient] = useState(null);
-  const [, setPrediction] = useState(null);
-  const [, setExplainability] = useState(null);
-  const [, setCohortData] = useState(null);
-  const [drugIntel, setDrugIntel] = useState(null);
   const [result, setResult] = useState(null);
 
   const [treatmentPlan] = useState({ type: 'Standard', dosage: 'Medium', duration: 30 });
@@ -294,8 +290,8 @@ const Dashboard = ({ role = 'doctor', providedId, providedSection }) => {
   
   // Generate agent insights based on patient data
   const agentInsights = useMemo(() => {
-    return generateAgentInsights(patient, drugIntel, result, realAgentAnalyses);
-  }, [patient, drugIntel, result, realAgentAnalyses]);
+    return generateAgentInsights(patient, null, result, realAgentAnalyses);
+  }, [patient, result, realAgentAnalyses]);
 
   // Load dashboard data
   useEffect(() => {
@@ -305,26 +301,14 @@ const Dashboard = ({ role = 'doctor', providedId, providedSection }) => {
       try {
         if (!id) return;
         
-        const [patientRes, predictionRes, explainRes] = await Promise.allSettled([
-          apiClient.get(`/patient/${id}`),
-          apiClient.get(`/predict/${id}`),
-          apiClient.post('/explain/insights', { patientId: id }),
+        const [patientRes] = await Promise.allSettled([
+          apiClient.get(`/patient/${id}`)
         ]);
 
         if (patientRes.status !== 'fulfilled') throw patientRes.reason;
 
         const patientData = patientRes.value.data;
         setPatient(patientData);
-        if (predictionRes.status === 'fulfilled') setPrediction(predictionRes.value.data);
-        if (explainRes.status === 'fulfilled') setExplainability(explainRes.value.data);
-
-        const [cohortRes, drugRes] = await Promise.allSettled([
-          apiClient.post('/explain/cohort-match', { patientId: id, treatmentPlan }),
-          apiClient.post('/explain/drug-intelligence', { patientId: id }),
-        ]);
-
-        if (cohortRes.status === 'fulfilled') setCohortData(cohortRes.value.data);
-        if (drugRes.status === 'fulfilled') setDrugIntel(drugRes.value.data);
       } catch (loadError) {
         console.error(loadError);
         setError('Unable to load the digital twin dashboard.');
