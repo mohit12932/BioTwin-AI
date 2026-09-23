@@ -21,10 +21,16 @@ router.post('/parse-document', upload.array('documents', 5), async (req, res) =>
     }
     
     // Map files to an array of { buffer, mimetype }
-    const filesData = req.files.map(file => ({
-      buffer: file.buffer,
-      mimeType: file.mimetype
-    }));
+    const filesData = req.files.map(file => {
+      let mimeType = file.mimetype;
+      if (mimeType === 'application/octet-stream' && file.originalname && file.originalname.toLowerCase().endsWith('.pdf')) {
+        mimeType = 'application/pdf';
+      }
+      return {
+        buffer: file.buffer,
+        mimeType: mimeType
+      };
+    });
     
     const parsedData = await parseMedicalDocument(filesData);
     

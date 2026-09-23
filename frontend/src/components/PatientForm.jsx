@@ -125,7 +125,8 @@ const PatientForm = ({ darkMode = false }) => {
       
     } catch (err) {
       console.error(err);
-      setSubmitStatus({ type: 'error', message: 'Failed to parse documents. Please try again or fill manually.' });
+      const errorMsg = err?.response?.data?.message || err?.message || 'Failed to parse documents';
+      setSubmitStatus({ type: 'error', message: `Submission failed: ${errorMsg}` });
       setUiState('upload');
     }
   };

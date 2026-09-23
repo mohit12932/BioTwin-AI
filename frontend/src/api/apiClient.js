@@ -161,8 +161,8 @@ export const parseLabReport = async (files) => {
     headers: {
       'Content-Type': 'multipart/form-data',
     },
-    // Don't timeout on OCR as it takes longer
-    timeout: 30000 
+    // Don't timeout on OCR as it takes longer (2 mins)
+    timeout: 120000 
   });
   
   return response.data;
