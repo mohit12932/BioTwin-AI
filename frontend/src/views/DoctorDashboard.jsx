@@ -68,6 +68,7 @@ const DoctorDashboard = () => {
       <header className="sticky top-0 z-10 border-b border-black/5 bg-white/80 px-6 py-4 backdrop-blur-md">
         <div className="mx-auto flex max-w-6xl items-center justify-between">
           <div className="flex items-center gap-3">
+            {/* eslint-disable-next-line @next/next/no-img-element */}
             <img src="/logo.jpg" alt="BioTwin Logo" className="h-10 w-10 rounded-xl object-contain bg-white shadow-sm" />
             <div>
               <h1 className="text-xl font-bold tracking-tight text-slate-900">BioTwin Clinical Home</h1>

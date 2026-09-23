@@ -461,7 +461,7 @@ const Dashboard = ({ role = 'doctor', providedId, providedSection }) => {
         message: 'CONSENSUS ACHIEVED'
       }
     ];
-  }, [patient]);
+  }, []);
 
   const DEMO_CONSENSUS_RESULT = useMemo(() => ({
     protocol: 'Palliative Care and Symptom Management for Oncology Patient',
@@ -479,7 +479,7 @@ const Dashboard = ({ role = 'doctor', providedId, providedSection }) => {
       endocrinologist: 'agreed',
       hera: 'adjusted'
     }
-  }), [patient]);
+  }), []);
 
   // Helper function to format timestamp - wrapped in useCallback to prevent dependency issues
   const formatTimestamp = useCallback(() => {
@@ -663,7 +663,6 @@ const Dashboard = ({ role = 'doctor', providedId, providedSection }) => {
       console.error(error);
       setSimulating(false);
     }
-    // eslint-disable-next-line react-hooks/exhaustive-deps
   }, [id, formatTimestamp]);
   
   // Fallback demo deliberation (when backend unavailable)
@@ -854,7 +853,7 @@ const Dashboard = ({ role = 'doctor', providedId, providedSection }) => {
                 <span className="text-[13px] font-bold tracking-tight text-amber-800">CLINICIAN STEERING</span>
                 <span className="text-[10px] text-amber-600 ml-auto font-medium">{msg.timestamp}</span>
               </div>
-              <p className="text-[12px] text-amber-900 font-medium italic">"{msg.constraint || msg.message}"</p>
+              <p className="text-[12px] text-amber-900 font-medium italic">&quot;{msg.constraint || msg.message}&quot;</p>
             </div>
           </div>
         </div>
