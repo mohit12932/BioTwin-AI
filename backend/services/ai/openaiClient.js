@@ -421,13 +421,19 @@ Do not include markdown blocks, just raw JSON.`;
  * Extract structured JSON from multiple medical document images using Gemini Multimodal
  */
 async function parseMedicalDocument(filesData) {
-  if (!genAI) {
-    throw new Error("Gemini API is required for multimodal document parsing.");
+  let ocrGenAI = genAI;
+  if (!ocrGenAI && process.env.GEMINI_API_KEY) {
+    ocrGenAI = new GoogleGenerativeAI(process.env.GEMINI_API_KEY);
+  }
+
+  if (!ocrGenAI) {
+    throw new Error("Gemini API is required for multimodal document parsing. Please set GEMINI_API_KEY.");
   }
   
   console.log(`[AI AGENT] Parsing ${filesData.length} medical document(s) with Gemini Multimodal`);
   
-  const model = genAI.getGenerativeModel({ model: MODEL });
+  // Always use the correct multimodal model for OCR, regardless of the text agent model
+  const model = ocrGenAI.getGenerativeModel({ model: 'gemini-3.5-flash-lite' });
   
   const prompt = `You are a highly accurate clinical data extraction AI. 
 Read the provided medical document(s) (lab reports, discharge summaries, or pill bottles) and extract the patient's data into the following strict JSON format.
