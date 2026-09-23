@@ -78,7 +78,7 @@ flowchart TB
     Orchestrator <-->|Clinical Debate| LLM
 
     %% Orchestrator to Safety Engine
-    Orchestrator <-->|O(1) Veto / Validation via node-addon-api| HERA
+    Orchestrator <-->|"O(1) Veto / Validation via node-addon-api"| HERA
 ```
 
 ### 1. Multi-Agent Orchestration (Node.js & OpenAI)
@@ -161,8 +161,6 @@ npm run dev
 ```bash
 cd frontend
 npm run dev
-<<<<<<< HEAD
-=======
 # App opens on http://localhost:3000
 ```
 
@@ -177,7 +175,6 @@ npm start
 cd frontend
 npm run build
 npm run start
->>>>>>> 3778f74bcd64ed2d22a6821855c819025c03908c
 ```
 Navigate to `http://localhost:3000` and login with the demo credentials.
 
