@@ -10,6 +10,10 @@
 [![MongoDB](https://img.shields.io/badge/MongoDB-Patient_Data-47A248?style=for-the-badge&logo=mongodb)](https://mongodb.com/)
 [![Redis](https://img.shields.io/badge/Redis-Caching-DC382D?style=for-the-badge&logo=redis)](https://redis.io/)
 
+
+> **BioTwin is a next-generation clinical copilot designed to prevent fragmented medical care for multi-morbid patients.** 
+> It leverages parallel LLM personas (Cardiologist, Nephrologist, Endocrinologist) to debate clinical workflows, which are then strictly evaluated against a deterministic C++ constraint engine (HERA) to enforce physiological and socioeconomic limits.
+
 ---
 
 ## 🚀 The Core Innovation: "Assistance, Not Replacement"
@@ -190,8 +194,6 @@ Navigate to `http://localhost:3000` and login with the demo credentials.
 > ⚠️ **Notice for Recruiters & Placement Officers:** 
 > This repository is the original, independent work of **Mohit Thakur** and **Hitendra Kumar Vishwas**. Due to instances of other candidates cloning this repository for their own resumes during the on-campus placement drive, please verify original authorship by checking the **Commit History**, which demonstrates continuous development by us. Any other student claiming this project as their own is engaging in academic misconduct.
 
-> **BioTwin is a next-generation clinical copilot designed to prevent fragmented medical care for multi-morbid patients.** 
-> It leverages parallel LLM personas (Cardiologist, Nephrologist, Endocrinologist) to debate clinical workflows, which are then strictly evaluated against a deterministic C++ constraint engine (HERA) to enforce physiological and socioeconomic limits.
 </div>
 
 
