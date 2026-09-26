@@ -9,6 +9,10 @@
 [![OpenAI](https://img.shields.io/badge/OpenAI-Multi--Agent_Orchestration-white?style=for-the-badge&logo=openai)](https://openai.com/)
 [![MongoDB](https://img.shields.io/badge/MongoDB-Patient_Data-47A248?style=for-the-badge&logo=mongodb)](https://mongodb.com/)
 [![Redis](https://img.shields.io/badge/Redis-Caching-DC382D?style=for-the-badge&logo=redis)](https://redis.io/)
+
+> ⚠️ **Notice for Recruiters & Placement Officers:** 
+> This repository is the original, independent work of **Mohit Thakur** and **Hitendra Kumar Vishwas**. Due to instances of other candidates cloning this repository for their own resumes during the on-campus placement drive, please verify original authorship by checking the **Commit History**, which demonstrates continuous development by us. Any other student claiming this project as their own is engaging in academic misconduct.
+
 > **BioTwin is a next-generation clinical copilot designed to prevent fragmented medical care for multi-morbid patients.** 
 > It leverages parallel LLM personas (Cardiologist, Nephrologist, Endocrinologist) to debate clinical workflows, which are then strictly evaluated against a deterministic C++ constraint engine (HERA) to enforce physiological and socioeconomic limits.
 </div>
@@ -139,14 +143,9 @@ npm install
 ```
 
 ### 2. Environment Configuration
-Create a `.env` file in the `/backend` directory:
-```env
-PORT=5000
-MONGODB_URI=mongodb://localhost:27017/biotwin
-REDIS_URL=redis://localhost:6379
-JWT_SECRET=your_super_secret_jwt_key
-OPENAI_API_KEY=sk-your-openai-key
-```
+Due to proprietary reasons and to prevent unauthorized deployments during our placement drive, the specific environment variable configuration schema, `.env` file structure, and API keys are not provided publicly. 
+
+*Note for Recruiters: The full source code architecture is available here for your review, and the working application can be accessed via the Live Link on our resumes.*
 
 ### 3. Run the Platform
 Open two terminals.

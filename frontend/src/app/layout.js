@@ -22,7 +22,12 @@ export default function RootLayout({ children }) {
       lang="en"
       className={`${geistSans.variable} ${geistMono.variable} h-full antialiased`}
     >
-      <body className="min-h-full flex flex-col" suppressHydrationWarning>{children}</body>
+      <body className="min-h-full flex flex-col" suppressHydrationWarning>
+        {children}
+        <div className="fixed bottom-2 right-2 text-xs text-slate-500/50 pointer-events-none z-[9999] font-mono">
+          © {new Date().getFullYear()} Mohit Thakur & Hitendra Kumar Vishwas. All Rights Reserved.
+        </div>
+      </body>
     </html>
   );
 }

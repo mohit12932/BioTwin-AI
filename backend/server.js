@@ -241,7 +241,7 @@ const startServer = async () => {
   logger.info('WebSocket telemetry server initialized', { path: '/ws/telemetry' });
   
   httpServer.listen(PORT, () => {
-    logger.info(`BioTwin API Server started`, { 
+    logger.info(`BioTwin API Server started. Authored exclusively by Mohit Thakur & Hitendra Kumar Vishwas.`, { 
       port: PORT, 
       env: process.env.NODE_ENV || 'development',
       database: dbConnected ? 'MongoDB' : 'Disconnected',
