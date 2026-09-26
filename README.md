@@ -20,7 +20,7 @@
 
 Modern medicine suffers from severe fragmentation. A patient with Diabetes, Hypertension, and CKD might receive conflicting prescriptions from three different specialists, leading to catastrophic drug-drug interactions or unaffordable copays. 
 
-**BioTwin solves this by simulating the "Tumor Board" or Multidisciplinary Team (MDT) meeting.**
+**BioTwin solves this by simulating the Multidisciplinary Team (MDT) meeting.**
 
 Instead of relying on a single, hallucination-prone LLM, BioTwin utilizes an advanced **Agent Negotiation Protocol**. Specialized LLMs debate the patient's case, while the **Health Economics & Resource Agent (HERA)**—powered by a custom-compiled C++ graph engine—acts as a ruthless safety net, vetoing any AI proposal that violates strict medical, biological, or economic constraints.
 
@@ -117,62 +117,9 @@ You cannot trust LLMs with hard mathematical constraints like "$150/mo budget" o
 
 ## ⚙️ Local Setup & Installation
 
-### Prerequisites
-- Node.js v18+
-- Python 3.x and Build Tools (for compiling the C++ addon)
-- MongoDB instance (local or Atlas)
-- Redis server
-- OpenAI API Key
-
-### 1. Clone & Install Dependencies
-```bash
-git clone https://github.com/yourusername/biotwin-ai.git
-cd biotwin-ai
-
-# Install Backend & Compile C++ Engine
-cd backend
-npm install
-npm run build:native  # Triggers node-gyp configure && node-gyp build (Requires Visual Studio C++ Build Tools)
-
-# Install Frontend
-cd ../frontend
-npm install
-```
-
-### 2. Environment Configuration
-Due to proprietary reasons and to prevent unauthorized deployments during our placement drive, the specific environment variable configuration schema, `.env` file structure, and API keys are not provided publicly. 
+Due to proprietary reasons and to prevent unauthorized deployments during our placement drive, the specific environment variable configuration schema, `.env` file structure, API keys, and local setup instructions are not provided publicly. 
 
 *Note for Recruiters: The full source code architecture is available here for your review, and the working application can be accessed via the Live Link on our resumes.*
-
-### 3. Run the Platform
-Open two terminals.
-
-**Terminal 1 (Backend):**
-```bash
-cd backend
-npm run dev
-```
-
-**Terminal 2 (Frontend):**
-```bash
-cd frontend
-npm run dev
-# App opens on http://localhost:3000
-```
-
-#### Production Mode
-
-```bash
-# Backend
-cd backend
-npm start
-
-# Frontend
-cd frontend
-npm run build
-npm run start
-```
-Navigate to `http://localhost:3000` and login with the demo credentials.
 
 ---
 
@@ -195,7 +142,5 @@ Navigate to `http://localhost:3000` and login with the demo credentials.
 > This repository is the original, independent work of **Mohit Thakur** and **Hitendra Kumar Vishwas**. Due to instances of other candidates cloning this repository for their own resumes during the on-campus placement drive, please verify original authorship by checking the **Commit History**, which demonstrates continuous development by us. Any other student claiming this project as their own is engaging in academic misconduct.
 
 </div>
-
-
 ---
 *Designed for the future of Medicine. Built to empower the Doctor.*
