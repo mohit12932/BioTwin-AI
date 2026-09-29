@@ -138,23 +138,26 @@ const validateLifestyle = (lifestyle) => {
 
   if (lifestyle.smoking !== undefined && lifestyle.smoking !== null) {
     if (!allowedSmoking.includes(lifestyle.smoking)) {
-      return { valid: false, error: `smoking must be one of: ${allowedSmoking.join(', ')}` };
+      sanitized.smoking = 'Unknown';
+    } else {
+      sanitized.smoking = lifestyle.smoking;
     }
-    sanitized.smoking = lifestyle.smoking;
   }
 
   if (lifestyle.exercise !== undefined && lifestyle.exercise !== null) {
     if (!allowedExercise.includes(lifestyle.exercise)) {
-      return { valid: false, error: `exercise must be one of: ${allowedExercise.join(', ')}` };
+      sanitized.exercise = 'Unknown';
+    } else {
+      sanitized.exercise = lifestyle.exercise;
     }
-    sanitized.exercise = lifestyle.exercise;
   }
 
   if (lifestyle.alcohol !== undefined && lifestyle.alcohol !== null) {
     if (!allowedAlcohol.includes(lifestyle.alcohol)) {
-      return { valid: false, error: `alcohol must be one of: ${allowedAlcohol.join(', ')}` };
+      sanitized.alcohol = 'Unknown';
+    } else {
+      sanitized.alcohol = lifestyle.alcohol;
     }
-    sanitized.alcohol = lifestyle.alcohol;
   }
 
   return { valid: true, sanitized };

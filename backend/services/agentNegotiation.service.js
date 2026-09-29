@@ -409,7 +409,7 @@ async function heraAnalyze(session) {
 
     // Extract physiological and socioeconomic context
     const patientContext = {
-      budget: patient.socioEconomic?.monthlyBudget || patient.socioEconomic?.budget || 0,
+      budget: patient.socioEconomic?.monthlyBudget || patient.socioEconomic?.budget || 2000,
       egfr: patient.labs?.egfr || 100
     };
     

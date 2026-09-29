@@ -58,7 +58,7 @@ function validateRegimen(regimen, patientContext = { budget: 0, egfr: 100 }) {
     }
     
     if (patientContext.budget > 0 && total_cost > patientContext.budget) {
-      violations.push({ drugA: "BUDGET_EXCEEDED", drugB: `Total cost ${total_cost} exceeds budget ${patientContext.budget}` });
+      violations.push({ drugA: "BUDGET_EXCEEDED", drugB: `Blocked: Over Budget. Total cost ₹${total_cost} exceeds strict patient budget of ₹${patientContext.budget}` });
     }
     
     return violations;

@@ -191,6 +191,9 @@ const processIntake = (data) => {
     vitals,
     disease,
     treatmentGoal,
+    socioEconomic: {
+      monthlyBudget: treatmentGoal === 'Cost-effective' ? 2000 : 15000
+    },
     metrics: {
       baselineHealthIndex,
       riskScore: parseFloat(riskScore.toFixed(2)),
