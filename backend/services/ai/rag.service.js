@@ -4,7 +4,7 @@ require('dotenv').config({ path: __dirname + '/../../.env' });
 
 const genAI = new GoogleGenerativeAI(process.env.GEMINI_API_KEY);
 // We use the recommended embedding model for text
-const embeddingModel = genAI.getGenerativeModel({ model: 'embedding-001' });
+const embeddingModel = genAI.getGenerativeModel({ model: 'gemini-embedding-001' });
 
 /**
  * Generates a vector embedding for a given text string.

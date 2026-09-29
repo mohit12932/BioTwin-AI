@@ -51,7 +51,11 @@ let defaultModel = 'gpt-4o-mini';
 if (useOpenRouter) defaultModel = 'google/gemini-1.5-flash';
 else if (useGemini) defaultModel = 'gemini-3.5-flash-lite';
 
-const MODEL = process.env.AI_MODEL || process.env.OPENAI_MODEL || defaultModel;
+let MODEL = process.env.AI_MODEL || process.env.OPENAI_MODEL || defaultModel;
+if (useGemini && !useOpenRouter) {
+  // Force the correct model for this specific Gemini API key to avoid 404 Not Found errors
+  MODEL = 'gemini-3.5-flash-lite';
+}
 const TEMPERATURE = parseFloat(process.env.AI_TEMPERATURE || process.env.OPENAI_TEMPERATURE) || 0.3;
 const MAX_TOKENS = parseInt(process.env.AI_MAX_TOKENS) || 1200; // Reduced for faster response
 
