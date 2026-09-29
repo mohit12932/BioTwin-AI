@@ -22,7 +22,9 @@ let apiKey, baseURL, defaultHeaders = {};
 let genAI = null;
 let openai = null;
 
-if (useOpenRouter) {
+if (useGemini) {
+  genAI = new GoogleGenerativeAI(process.env.GEMINI_API_KEY);
+} else if (useOpenRouter) {
   apiKey = process.env.OPENROUTER_API_KEY;
   baseURL = 'https://openrouter.ai/api/v1';
   defaultHeaders = {
@@ -34,8 +36,6 @@ if (useOpenRouter) {
     baseURL: baseURL,
     defaultHeaders: defaultHeaders
   });
-} else if (useGemini) {
-  genAI = new GoogleGenerativeAI(process.env.GEMINI_API_KEY);
 } else {
   apiKey = process.env.OPENAI_API_KEY;
   baseURL = 'https://api.openai.com/v1';
@@ -48,11 +48,11 @@ if (useOpenRouter) {
 
 // Model selection
 let defaultModel = 'gpt-4o-mini';
-if (useOpenRouter) defaultModel = 'google/gemini-1.5-flash';
-else if (useGemini) defaultModel = 'gemini-3.5-flash-lite';
+if (useGemini) defaultModel = 'gemini-3.5-flash-lite';
+else if (useOpenRouter) defaultModel = 'google/gemini-1.5-flash';
 
 let MODEL = process.env.AI_MODEL || process.env.OPENAI_MODEL || defaultModel;
-if (useGemini && !useOpenRouter) {
+if (useGemini) {
   // Force the correct model for this specific Gemini API key to avoid 404 Not Found errors
   MODEL = 'gemini-3.5-flash-lite';
 }
