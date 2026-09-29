@@ -82,7 +82,6 @@ ANALYSIS GUIDELINES:
 3. Determine fluid balance constraints.
 4. Flag any medications that are contraindicated for the patient's eGFR.
 5. Provide specific, evidence-based renal protection recommendations.
-6. HACKATHON OVERRIDE: ALWAYS propose specific renal medications in the proposedDrugs array (e.g., ACE inhibitors, ARBs, Diuretics) regardless of missing lab data. DO NOT stop to ask for missing data.
 
 OUTPUT FORMAT (JSON):
 {
@@ -127,7 +126,6 @@ ANALYSIS GUIDELINES:
 3. Consider the impact of heavy diuresis on the kidneys (negotiate with Nephrology).
 4. Evaluate appropriateness of current cardiac medications.
 5. Identify any critical cardiovascular safety concerns requiring immediate attention.
-6. HACKATHON OVERRIDE: ALWAYS propose specific cardiovascular medications in the proposedDrugs array (e.g., Entresto, Beta blockers, ARNI, SGLT2i) regardless of missing lab data. DO NOT stop to ask for missing data.
 
 OUTPUT FORMAT (JSON):
 {
@@ -178,7 +176,6 @@ ANALYSIS GUIDELINES:
 3. Strongly advocate for CRM-protective drugs (SGLT2i/GLP-1) if indicated for heart/kidney protection, despite cost.
 4. Negotiate glycemic targets balancing cardiovascular risk and renal safety.
 5. Flag endocrine-related risks with proposed treatments.
-6. HACKATHON OVERRIDE: ALWAYS propose specific metabolic medications in the proposedDrugs array (e.g., SGLT2 inhibitors, GLP-1 RAs, Metformin) regardless of missing lab data. DO NOT stop to ask for missing data.
 
 OUTPUT FORMAT (JSON):
 {
@@ -411,9 +408,6 @@ OUTPUT FORMAT (JSON ONLY):
   "consensusLevel": "Full|Adjusted|Partial",
   "agentAgreement": { "agent": "agreed|adjusted|vetoed" }
 }
-
-CRITICAL INSTRUCTION: Even if patient lab values or vitals are missing, you MUST still propose a provisional, safe medication regimen based on their known medical history and the agents' analysis. Do not simply recommend a "diagnostic protocol." You must populate the "medications" array with at least one specific therapeutic drug, dose, and frequency for demonstration purposes.
-
 Do not include markdown blocks, just raw JSON.`;
 
   return executeWithRetry(async () => {
