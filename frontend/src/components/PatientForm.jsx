@@ -40,7 +40,8 @@ const PatientForm = ({ darkMode = false }) => {
     lifestyle: { smoking: 'Unknown', alcohol: 'Unknown', exercise: 'Unknown', diet: 'Unknown' },
     vitals: { heartRate: '', bpSystolic: '', bpDiastolic: '', sugar: '', spO2: '', temperature: '' },
     disease: 'Unknown',
-    treatmentGoal: 'Low Risk'
+    treatmentGoal: 'Low Risk',
+    monthlyBudget: ''
   });
 
   const [missingMetrics, setMissingMetrics] = useState([]);
@@ -99,6 +100,8 @@ const PatientForm = ({ darkMode = false }) => {
         age: parsedData.age || prev.age,
         gender: parsedData.gender || prev.gender,
         bloodGroup: parsedData.bloodGroup || prev.bloodGroup,
+        disease: parsedData.disease || prev.disease,
+        treatmentGoal: parsedData.treatmentGoal || prev.treatmentGoal,
         vitals: { ...prev.vitals, ...parsedData.vitals },
         medicalHistory: { ...prev.medicalHistory, conditions: parsedData.medicalHistory || prev.medicalHistory.conditions },
         lifestyle: { ...prev.lifestyle, ...parsedData.lifestyle }
@@ -116,8 +119,6 @@ const PatientForm = ({ darkMode = false }) => {
       if (!parsedData.name || parsedData.name.trim() === '') newMissing.push('name');
       if (!parsedData.age || parsedData.age === '' || parsedData.age === 'Unknown') newMissing.push('age');
       if (!parsedData.gender || parsedData.gender === '' || parsedData.gender === 'Unknown') newMissing.push('gender');
-      // If we couldn't infer the disease from the lab, we ask for it
-      if (!parsedData.disease && formData.disease === 'Unknown') newMissing.push('disease');
 
       setMissingMetrics(newMissing);
       setUiState('review');
@@ -266,13 +267,6 @@ const PatientForm = ({ darkMode = false }) => {
                             </select>
                           </div>
                         )}
-                        {missingMetrics.includes('disease') && (
-                          <div><label className={labelClass}>Primary Disease Focus</label>
-                            <select value={formData.disease} onChange={e => updateForm('disease', e.target.value)} className={inputClass}>
-                              <option>Unknown</option><option>Cardiac</option><option>Respiratory</option><option>Metabolic</option><option>Neurological</option><option>Oncology</option>
-                            </select>
-                          </div>
-                        )}
                       </div>
                     </div>
                   ) : (
@@ -289,15 +283,17 @@ const PatientForm = ({ darkMode = false }) => {
                      Start Over
                    </button>
                    
-                   <div className="flex items-center gap-4">
-                     <div className="text-right">
-                       <label className={`block text-xs uppercase tracking-wider mb-1 ${darkMode ? 'text-slate-500' : 'text-slate-400'}`}>Treatment Goal</label>
-                       <select value={formData.treatmentGoal} onChange={e => updateForm('treatmentGoal', e.target.value)} className={`text-sm font-semibold bg-transparent border-none focus:ring-0 cursor-pointer ${darkMode ? 'text-white' : 'text-slate-900'}`}>
-                         <option>Low Risk / Conservative</option>
-                         <option>Cost-effective</option>
-                         <option>Fast Recovery</option>
-                         <option>Experimental / High Risk</option>
-                       </select>
+                     <div className="flex flex-col sm:flex-row items-center gap-4">
+                     <div className="text-right flex items-center gap-2">
+                       <label className={`block text-xs uppercase tracking-wider ${darkMode ? 'text-slate-500' : 'text-slate-400'}`}>Monthly Budget (₹)</label>
+                       <input 
+                         type="number" 
+                         value={formData.monthlyBudget} 
+                         onChange={e => updateForm('monthlyBudget', e.target.value)} 
+                         placeholder="e.g. 2000"
+                         className={`w-24 px-2 py-1 text-sm font-semibold rounded border ${darkMode ? 'bg-slate-800 border-slate-700 text-white' : 'bg-white border-slate-200 text-slate-900'}`}
+                         required
+                       />
                      </div>
                      <button 
                        onClick={handleSubmit} 

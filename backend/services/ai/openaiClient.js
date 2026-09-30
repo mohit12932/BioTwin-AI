@@ -460,10 +460,12 @@ async function parseMedicalDocument(filesData) {
 Read the provided medical document(s) (lab reports, discharge summaries, or pill bottles) and extract the patient's data into the following strict JSON format.
 If multiple documents are provided, fuse the information into a single comprehensive profile.
 If a value is not present in ANY of the documents, use "" or leave the array empty.
-Infer the patient's primary medical conditions from their medications or lab abnormalities if not explicitly stated.
+Infer the patient's primary medical condition (disease) and appropriate treatmentGoal from their medications, lab abnormalities, or clinical context.
 
 OUTPUT FORMAT (JSON ONLY):
 {
+  "disease": "Cardiac|Respiratory|Metabolic|Neurological|Oncology|Unknown",
+  "treatmentGoal": "Low Risk / Conservative|Cost-effective|Fast Recovery|Experimental / High Risk",
   "name": "string",
   "age": "number or string",
   "gender": "Male|Female|Other",

@@ -115,7 +115,8 @@ const processIntake = (data) => {
     lifestyle = { smoking: "No", alcohol: "No", exercise: "None", diet: "Average" },
     vitals = { heartRate: 80, bpSystolic: 120, bpDiastolic: 80, sugar: 100, spO2: 98, temperature: 98.6 },
     disease = "Unknown",
-    treatmentGoal = "Low Risk"
+    treatmentGoal = "Low Risk",
+    monthlyBudget
   } = data;
 
   // 1. Calculate BMI
@@ -192,7 +193,7 @@ const processIntake = (data) => {
     disease,
     treatmentGoal,
     socioEconomic: {
-      monthlyBudget: treatmentGoal === 'Cost-effective' ? 2000 : 15000
+      monthlyBudget: monthlyBudget ? Number(monthlyBudget) : (treatmentGoal === 'Cost-effective' ? 2000 : 15000)
     },
     metrics: {
       baselineHealthIndex,
