@@ -178,11 +178,18 @@ const PatientForm = ({ darkMode = false }) => {
                     Upload lab reports, prescriptions, or vitals sheets. We support up to 5 images/PDFs at once.
                   </p>
                   
-                  <label className={`cursor-pointer inline-flex items-center justify-center px-8 py-3 rounded-xl font-bold transition-all shadow-lg hover:scale-105 ${darkMode ? 'bg-blue-600 text-white hover:bg-blue-500' : 'bg-lime-500 text-slate-900 hover:bg-lime-400'}`}>
-                    <Plus size={20} className="mr-2" />
-                    <span>Select Files</span>
-                    <input type="file" className="hidden" multiple accept="image/*,application/pdf" onChange={handleFileChange} />
-                  </label>
+                  <div className="flex flex-col sm:flex-row items-center justify-center gap-4">
+                    <label className={`cursor-pointer inline-flex items-center justify-center px-8 py-3 rounded-xl font-bold transition-all shadow-lg hover:scale-105 ${darkMode ? 'bg-blue-600 text-white hover:bg-blue-500' : 'bg-lime-500 text-slate-900 hover:bg-lime-400'}`}>
+                      <Plus size={20} className="mr-2" />
+                      <span>Select Files</span>
+                      <input type="file" className="hidden" multiple accept="image/*,application/pdf" onChange={handleFileChange} />
+                    </label>
+                    <label className={`cursor-pointer inline-flex items-center justify-center px-8 py-3 rounded-xl font-bold transition-all shadow-lg hover:scale-105 ${darkMode ? 'bg-slate-800 text-white border border-slate-700 hover:bg-slate-700' : 'bg-white text-slate-900 border border-slate-200 hover:bg-slate-50'}`}>
+                      <Camera size={20} className="mr-2" />
+                      <span>Take Photo</span>
+                      <input type="file" className="hidden" accept="image/*" capture="environment" onChange={handleFileChange} />
+                    </label>
+                  </div>
                 </div>
                 
                 {files.length > 0 && (

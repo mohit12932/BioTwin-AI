@@ -31,9 +31,6 @@ export default function Home() {
     },
   ];
 
-  const [demoCases, setDemoCases] = React.useState([]);
-  const [launchError, setLaunchError] = React.useState('');
-  const [isLaunching, setIsLaunching] = React.useState(false);
   const [isLoggedIn, setIsLoggedIn] = React.useState(false);
 
   React.useEffect(() => {
@@ -41,27 +38,7 @@ export default function Home() {
       // eslint-disable-next-line react-hooks/set-state-in-effect
       setIsLoggedIn(true);
     }
-    apiClient.get('/patient/demo-cases')
-      .then((response) => setDemoCases(response.data))
-      .catch((err) => {
-        console.error('Failed to load demo cases:', err);
-        setDemoCases([]);
-      });
   }, []);
-
-  const launchDemoCase = async (slug) => {
-    setLaunchError('');
-    setIsLaunching(true);
-    try {
-      const response = await apiClient.post(`/patient/demo-seed/${slug}`);
-      router.push(`/dashboard/${response.data.patientId}`);
-    } catch (err) {
-      console.error('Failed to launch demo case:', err);
-      setLaunchError(err.response?.data?.error || 'Failed to launch demo case. Please try again.');
-    } finally {
-      setIsLaunching(false);
-    }
-  };
 
   return (
     <div className="min-h-screen px-6 py-10 bg-[radial-gradient(circle_at_top,_rgba(217,255,102,0.26),_transparent_32%),linear-gradient(180deg,_#edf5e8_0%,_#deefd2_100%)] text-slate-900">
@@ -124,37 +101,6 @@ export default function Home() {
               </div>
             );
           })}
-        </div>
-
-        <div className="rounded-[2rem] border p-6 border-black/5 bg-white/80 shadow-sm">
-          <div className="mb-5 flex items-center gap-3">
-            <div className="rounded-2xl p-3 bg-violet-100 text-violet-700"><Presentation className="h-5 w-5" /></div>
-            <div>
-              <h2 className="text-2xl font-semibold text-slate-900">Presentation Mode</h2>
-              <p className="text-sm text-slate-600">Launch seeded domain cases instantly for demos, judging, or stakeholder walkthroughs.</p>
-            </div>
-          </div>
-          {launchError && (
-            <div className="mb-4 rounded-xl border p-3 text-sm border-rose-200 bg-rose-50 text-rose-700">
-              {launchError}
-            </div>
-          )}
-          <div className="grid grid-cols-1 gap-4 md:grid-cols-3">
-            {demoCases.map((demo) => (
-              <button 
-                key={demo.slug} 
-                onClick={() => launchDemoCase(demo.slug)} 
-                disabled={isLaunching}
-                className="rounded-3xl border p-5 text-left transition hover:-translate-y-1 disabled:opacity-50 disabled:cursor-not-allowed disabled:hover:translate-y-0 border-black/5 bg-[#f8f6f0] hover:border-violet-300 hover:bg-white"
-              >
-                <p className="text-xs uppercase tracking-[0.2em] text-violet-700">{demo.disease}</p>
-                <p className="mt-2 text-lg font-semibold text-slate-900">{demo.title}</p>
-                <p className="mt-3 inline-flex items-center gap-2 text-sm text-slate-600">
-                  {isLaunching ? 'Launching...' : 'Launch case'} <ArrowRight className="h-4 w-4" />
-                </p>
-              </button>
-            ))}
-          </div>
         </div>
       </div>
     </div>

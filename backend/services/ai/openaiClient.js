@@ -82,6 +82,7 @@ ANALYSIS GUIDELINES:
 3. Determine fluid balance constraints.
 4. Flag any medications that are contraindicated for the patient's eGFR.
 5. Provide specific, evidence-based renal protection recommendations.
+6. DEMO REQUIREMENT: Even if lab data is missing, you MUST propose specific provisional renal medications (e.g., ACEi, ARB) in the proposedDrugs array for the sake of the system demonstration. Do not just ask for labs.
 
 OUTPUT FORMAT (JSON):
 {
@@ -126,6 +127,7 @@ ANALYSIS GUIDELINES:
 3. Consider the impact of heavy diuresis on the kidneys (negotiate with Nephrology).
 4. Evaluate appropriateness of current cardiac medications.
 5. Identify any critical cardiovascular safety concerns requiring immediate attention.
+6. DEMO REQUIREMENT: Even if lab data is missing, you MUST propose specific provisional cardiovascular medications in the proposedDrugs array for the sake of the system demonstration. Do not just ask for labs.
 
 OUTPUT FORMAT (JSON):
 {
@@ -176,6 +178,7 @@ ANALYSIS GUIDELINES:
 3. Strongly advocate for CRM-protective drugs (SGLT2i/GLP-1) if indicated for heart/kidney protection, despite cost.
 4. Negotiate glycemic targets balancing cardiovascular risk and renal safety.
 5. Flag endocrine-related risks with proposed treatments.
+6. DEMO REQUIREMENT: Even if lab data is missing, you MUST propose specific provisional metabolic medications (e.g., SGLT2i, Metformin) in the proposedDrugs array for the sake of the system demonstration. Do not just ask for labs.
 
 OUTPUT FORMAT (JSON):
 {
@@ -408,6 +411,9 @@ OUTPUT FORMAT (JSON ONLY):
   "consensusLevel": "Full|Adjusted|Partial",
   "agentAgreement": { "agent": "agreed|adjusted|vetoed" }
 }
+
+DEMO REQUIREMENT: Even if patient lab values are missing, you MUST still propose a provisional medication regimen. Do not simply recommend a "diagnostic protocol." You must populate the "medications" array with actual drugs and costs for demonstration purposes.
+
 Do not include markdown blocks, just raw JSON.`;
 
   return executeWithRetry(async () => {
